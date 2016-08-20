@@ -11,7 +11,7 @@ using namespace std;
 
 int main()
 {
-    // using T = std::tuple<int, double, char>;
+    using T = std::tuple<int, double, char>;
 
     // std::cout << std::boolalpha;
 
@@ -25,12 +25,23 @@ int main()
 
     // std::cout << std::is_same<tuple_contains_type<int, T>, std::true_type>::value << std::endl;
 
+    // std::cout << tuple_contains_type<int, T>::value << std::endl;
+    // std::cout << tuple_contains_type<double, T>::value << std::endl;
+    // std::cout << tuple_contains_type<char, T>::value << std::endl;
+    // std::cout << tuple_contains_type<long, T>::value << std::endl;
+
+
+    cout << std::get<0>(canvasStyleString);
 
 	std::vector<int> ints = {1,2,3,4,5,6,7};
 
-
 	Qplot qplot;
-	qplot.plot(ints, ImageSize{400,300});
+	// qplot.plot(ints, AxisExtents{{0,1}, {0,2}}, ImageSize{400,300});
+	qplot.plot(ints, AxisExtents{{0,1}, {0,2}}, ImageSize{400,300}, HeatMapStyle{});
+
+	qplot << "\nsometime later...\n\n";
+
+	qplot.plot(ints);
 
 	qplot << "reset\n";
 }

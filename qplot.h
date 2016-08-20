@@ -4,54 +4,92 @@
 #include <type_traits>
 
 #include "gnuplot.h"
+#include "util.h"
 
-
-struct image_size_canvas_property{};
+struct image_size_style : public std::string {};
+struct axis_extents_style : public std::string {};
 
 struct ImageSize
 {
-	using CanvasType = image_size_canvas_property;
+	using CanvasType = image_size_style;
 
-	std::string plotString() {
+	std::string plotString() const {
 		return "set terminal pngcairo size " + std::to_string(x) + "," + std::to_string(y) + "\n";
 	}
 	int x = 800;
 	int y = 640;
 };
 
-struct grid_object_style : std::string {};
+struct AxisExtents
+{
+	using CanvasType = axis_extents_style;
+
+	std::string plotString() const {
+		return "axis extents style string\n";
+	}
+	int x[2] = {0,1};
+	int y[2] = {0,1};
+};
+
+struct image_map_style : public std::string {};
+struct vector_field_style : public std::string {};
 
 struct HeatMapStyle
 {
-	using ObjectStyle = grid_object_style;
+	using PlotType = image_map_style;
+
+	std::string plotString() const { return "heat map style string\n"; }
 };
 
+template <typename T>
+struct plot_traits;
 
-// http://stackoverflow.com/a/25958302/254035
-template <typename T, typename Tuple>
-struct has_type;
+template <>
+struct plot_traits<std::vector<int>> {
+	using PlotType = image_map_style;
+};
+
+template <typename T> struct is_canvas_property { static constexpr bool value = false; };
+template <> struct is_canvas_property<ImageSize>   { static constexpr bool value = true; };
+template <> struct is_canvas_property<AxisExtents> { static constexpr bool value = true; };
+
+template <typename T> struct is_plot_property { static constexpr bool value = false; };
+template <> struct is_plot_property<HeatMapStyle> { static constexpr bool value = true; };
+
+struct Foo {
+	using PlotType = image_size_style;
+};
+
+std::tuple<image_size_style,
+		   axis_extents_style,
+           image_map_style
+          >
+          canvasStyleString;
+
+
+std::tuple<vector_field_style,
+           image_map_style
+          >
+          plotStyleString;
 
 template <typename T>
-struct has_type<T, std::tuple<>> : std::false_type {};
+void plotObject(Gnuplot& gnuplot, const T& obj)
+{
+	// write the style associated with this object
+	// constexpr size_t index = tuple_contains_type<typename T::PlotType, decltype(plotStyleString)>::value;
+	constexpr size_t index = tuple_contains_type<typename plot_traits<T>::PlotType, decltype(plotStyleString)>::value;
 
-template <typename T, typename... Ts>
-struct has_type<T, std::tuple<T, Ts...>> : std::true_type {};
+	writeStyleString(gnuplot, std::get<index>(plotStyleString));
 
-template <typename T, typename U, typename... Ts>
-struct has_type<T, std::tuple<U, Ts...>> : has_type<T, std::tuple<Ts...>> {};
-
-template <typename T, typename Tuple>
-using tuple_contains_type = typename has_type<T, Tuple>::type;
-
-std::tuple<image_size_canvas_property,
-           grid_object_style
-          > styleString{};
+	// write the row data
+	// writeRowData(gnuplot, rowData(obj));
+}
 
 class Qplot
 {
 public:
-    enum { DRY_RUN, STDOUT, GNUPLOT };
-    static constexpr int target = STDOUT;
+    enum class Target { DRY_RUN, STDOUT, GNUPLOT };
+    static constexpr Target target = Target::STDOUT;
 
 	friend Qplot& operator<<(Qplot& qplot, const std::string& str);
 
@@ -59,30 +97,95 @@ public:
     {
         switch (target)
         {
-            case DRY_RUN: gnuplot_ = std::make_unique<Gnuplot>("cat > /dev/null");  break;
-            case STDOUT:  gnuplot_ = std::make_unique<Gnuplot>("cat");              break;
-            case GNUPLOT: gnuplot_ = std::make_unique<Gnuplot>("gnuplot");          break;
+            case Target::DRY_RUN: gnuplot_ = std::make_unique<Gnuplot>("cat > /dev/null");  break;
+            case Target::STDOUT:  gnuplot_ = std::make_unique<Gnuplot>("cat");              break;
+            case Target::GNUPLOT: gnuplot_ = std::make_unique<Gnuplot>("gnuplot");          break;
             default : assert(false);
         }
     }
 
-    template <typename T, typename... Ts>
-    void processArgs(const T& arg, const Ts&... args)
-    {
 
+
+    void processCanvasArgs() {}
+    void processPlotArgs() {}
+
+    template <typename T, typename... Ts,
+              std::enable_if_t<is_canvas_property<T>::value, int> = 0>
+    void processCanvasArgs(const T& arg, const Ts&... args)
+    {
+		constexpr size_t index = tuple_contains_type<typename T::CanvasType, decltype(canvasStyleString)>::value;
+		// std::cout << "index " << index << " is " << arg.plotString() << std::endl;
+
+		if (index >= 0) {
+			std::get<index>(canvasStyleString).assign(arg.plotString());
+		}
+
+		processCanvasArgs(args...);
+    }
+
+    template <typename T, typename... Ts,
+              std::enable_if_t<!is_canvas_property<T>::value, int> = 0>
+    void processCanvasArgs(const T& arg, const Ts&... args)
+    {
+    	// Do nothing: remove this argument and continue
+		processCanvasArgs(args...);
+    }
+
+    template <typename T, typename... Ts,
+              std::enable_if_t<is_canvas_property<T>::value, int> = 0>
+    void processPlotArgs(const T& arg, const Ts&... args)
+    {
+    	// Do nothing: remove this argument and continue
+    	processPlotArgs(args...);
+    }
+
+    template <typename T, typename... Ts,
+              std::enable_if_t<is_plot_property<T>::value, int> = 0>
+    void processPlotArgs(const T& arg, const Ts&... args)
+    {
+		constexpr size_t index = tuple_contains_type<typename T::PlotType, decltype(plotStyleString)>::value;
+		// std::cout << "index " << index << " is " << arg.plotString() << std::endl;
+
+		if (index >= 0) {
+			std::get<index>(plotStyleString).assign(arg.plotString());
+		}
+
+		processPlotArgs(args...);
+    }
+
+    template <typename T, typename... Ts,
+              std::enable_if_t<!is_plot_property<T>::value &&
+                               !is_canvas_property<T>::value, int> = 0>
+    void processPlotArgs(const T& arg, const Ts&... args)
+    {
+    	// Actual objects to plot
+    	plotObject(*gnuplot_, arg);
+
+
+		// constexpr size_t index = tuple_contains_type<typename T::PlotType, decltype(plotStyleString)>::value;
+		// std::cout << "index " << index << " is " << arg.plotString() << std::endl;
+
+		// if (index >= 0) {
+			// std::get<index>(plotStyleString).assign(arg.plotString());
+		// }
+
+		processPlotArgs(args...);
     }
 
     template <typename... Ts>
 	void plot(const Ts&... args)
 	{
-		auto t = std::make_tuple(args...);
+		processCanvasArgs(args...);
+		// auto t = std::make_tuple(args...);
 
-		std::cout << std::boolalpha;
-		std::cout << tuple_contains_type<ImageSize::CanvasType, decltype(styleString)>::value << std::endl;
+    	writeStyleString(*gnuplot_, canvasStyleString);
 
-		// processArgs(args...);
+    	// enable multiplot
 
+		processPlotArgs(args...);
 
+		// disable multiplot
+    	// writeStyleString(gnuplot_.get(), plotStyleString);
 	}
 
 private:
