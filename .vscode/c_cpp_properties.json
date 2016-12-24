@@ -3,7 +3,8 @@
         {
             "name": "Mac",
             "includePath": ["/usr/include",
-                            "/Users/tom/3rdparty/libs/gtest-1.7.0/include"],
+                            "/Users/tom/3rdparty/libs/gtest-1.7.0/include",
+                            "/Users/tom/3rdparty/libs/llvm-svn/build/include/c++/v1"],
             "browse" : {
                 "limitSymbolsToIncludedHeaders" : true,
                 "databaseFilename" : ""
