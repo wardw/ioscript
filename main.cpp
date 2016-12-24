@@ -1,8 +1,6 @@
 #include <iostream>
 #include <vector>
 
-
-
 #include "qplot.h"
 
 using namespace std;
@@ -12,7 +10,7 @@ using namespace std;
 int main()
 {
     using T = std::tuple<int, double, char>;
-
+   
     // std::cout << std::boolalpha;
 
     // std::cout << tuple_contains_type<int, T>::value << std::endl;
@@ -36,12 +34,14 @@ int main()
 	std::vector<int> ints = {1,2,3,4,5,6,7};
 
 	Qplot qplot;
-	// qplot.plot(ints, AxisExtents{{0,1}, {0,2}}, ImageSize{400,300});
-	qplot.plot(ints, AxisExtents{{0,1}, {0,2}}, ImageSize{400,300}, HeatMapStyle{});
+	qplot.plot(AxisExtents{{0,1}, {0,2}}, ImageSize{400,300});
+	// qplot.plot(ints, AxisExtents{{0,1}, {0,2}}, ImageSize{400,300}, HeatMap{});
 
 	qplot << "\nsometime later...\n\n";
-
-	qplot.plot(ints);
+    
+    qplot.plot(ints, BarChart(), ints, ints, LineChart(), ints);
 
 	qplot << "reset\n";
+
+    cout << "has_pass: " << has_pass<LineChart>::value << endl;
 }
