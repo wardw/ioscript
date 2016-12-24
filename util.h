@@ -38,7 +38,7 @@ using tuple_contains_type = typename has_type<T, 0, Tuple>::type;
 
 
 
-// has_foo<T> tests wether T::foo exists as a nested type
+// has_supported_types<T> tests wether T::foo exists as a nested type
 // Modified from http://stackoverflow.com/a/11816999/254035
 
 template<class T>
@@ -47,13 +47,13 @@ struct TestType {
 };
 
 template<class T, class U = void>
-struct has_foo {
+struct has_supported_types {
     static constexpr bool value = false;
 };
 
 // The idea is that if TestType<T> is a valid substitution (and so T exists), this template is enabled
 template<class T>
-struct has_foo<T, typename TestType<typename T::foo>::type> {
+struct has_supported_types<T, typename TestType<typename T::supported_types>::type> {
     static constexpr bool value = true;
 };
 
@@ -73,6 +73,39 @@ struct has_pass {
 template<class T>
 struct has_pass<T, typename TestNontype<T::pass>::type> {
     static constexpr bool value = true;
+};
+
+
+// Tuple updater
+
+template <typename T> struct chart_traits;
+
+template<class T, class Tuple, class ObjTypes, std::size_t N>
+struct TupleUpdater {
+    static void update(Tuple& chartStyles, const T& style)
+    {
+		using Type = std::tuple_element_t<N-1, ObjTypes>;
+		std::get<chart_traits<Type>::index>(chartStyles) = style;
+
+        TupleUpdater<T, Tuple, ObjTypes, N-1>::update(chartStyles, style);
+    }
+};
+ 
+template<class T, class Tuple, class ObjTypes>
+struct TupleUpdater<T, Tuple, ObjTypes, 1> {
+    static void update(Tuple& chartStyles, const T& style)
+    {
+		using Type = std::tuple_element_t<0, ObjTypes>;
+		std::get<chart_traits<Type>::index>(chartStyles) = style;
+    }
+};
+
+// Todo: can't we just have a base case for when N=0?
+template<class T, class Tuple, class ObjTypes>
+struct TupleUpdater<T, Tuple, ObjTypes, 0> {
+    static void update(Tuple& chartStyles, const T& style)
+    {
+    }
 };
 
 
