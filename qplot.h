@@ -8,9 +8,11 @@
 
 #include "styles.h"
 
-
-// This is called for every object to plot, along with the it's currently associated style
+// These non-members are called for every object to plot, along with the it's currently associated style
 // Overload to completely govern how this type is plotted
+
+// Plotting styles associated to objects
+
 template <typename P, typename Style, typename T>
 void plotObject(Process<P>& gnuplot, const Style& style, const T& obj)
 {
@@ -29,6 +31,27 @@ template <typename Style, typename T,
 void plotObject(Process<Mpl>& mpl, const Style& style, const T& obj)
 {
     style.plot(mpl, obj);
+}
+
+// Plotting styles with no associated object
+
+template <typename P, typename Style>
+void plotStyle(Process<P>& gnuplot, const Style& style)
+{
+}
+
+template <typename Style,
+          std::enable_if_t<has_plot<Style, void(Process<Gnuplot>&)>::value, int> = 0>
+void plotStyle(Process<Gnuplot>& gnuplot, const Style& style)
+{
+    style.plot(gnuplot);
+}
+
+template <typename Style,
+          std::enable_if_t<has_plot<Style, void(Process<Mpl>&)>::value, int> = 0>
+void plotStyle(Process<Mpl>& mpl, const Style& style)
+{
+    style.plot(mpl);
 }
 
 using NoStyles = std::tuple<>;
@@ -66,7 +89,7 @@ public:
               std::enable_if_t<!has_supported_types<T>::value, int> = 0>
     void processArgs(const T& style, const Ts&... args)
     {
-		style.plot(*process_);
+        plotStyle(*process_, style);
 
 		processArgs(args...);
     }

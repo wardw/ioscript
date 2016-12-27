@@ -28,7 +28,7 @@ void mplTesting()
 	Qplot<Mpl> qplot;
 	// qplot.plot(ints, AxisExtents{{0,1}, {0,2}}, ImageSize{400,300}, ints);
     // qplot.plot(ints, ints, ints, LineChart(), ints);
-    qplot.plot(ints);
+    qplot.plot(PythonInit(), ints, ints);
 }
 
 int main()

@@ -31,6 +31,21 @@ void sendData(Process<Gnuplot>& gnuplot, const std::vector<T>& obj)
     }
 }
 
+struct PythonInit
+{
+	static constexpr int pass = 1;
+
+	void plot(Process<Mpl>& mpl) const {
+        mpl <<
+R"(
+import os
+os.close(4)
+fo = os.fdopen(3, 'r')
+)"
+		<< "\n";
+	}
+};
+
 struct LineChart
 {
 	static constexpr int pass = 1;
@@ -44,20 +59,23 @@ struct LineChart
 	}
 
 	template<typename T>
-	void plot(Process<Mpl>& mpl, const T& obj) const {
-        // mpl << "print \"hello python\"\n";
+	void plot(Process<Mpl>& mpl, const T& obj) const
+	{
         mpl <<
 R"(
-import os
-os.close(4)
-fo = os.fdopen(3, 'r')
 for line in fo:
-    print "(Python) " + line,
+	if line == 'EOT\n':
+		break
+	print "(Python) " + line,
 print "(Python) Done"
 )"
 		<< "\n";
 
-		mpl.fdout() << "1\n2\n3\n4\n5\n";
+		for (auto elem : obj)
+		{
+			mpl.fdout() << elem << '\n';
+		}
+		mpl.fdout() << "EOT" << '\n';
 	}
 };
 
