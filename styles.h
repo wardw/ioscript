@@ -5,8 +5,8 @@ struct ImageSize
 {
 	static constexpr int pass = 0;
 
-	std::string plotString() const {
-		return "set image size " + std::to_string(x) + "," + std::to_string(y) + "\n";
+	void plot(Process<Gnuplot>& gnuplot) const {
+		gnuplot << "set image size " + std::to_string(x) + "," + std::to_string(y) + "\n";
 	}
 	int x = 800;
 	int y = 640;
@@ -16,12 +16,20 @@ struct AxisExtents
 {
 	static constexpr int pass = 0;
 	
-	std::string plotString() const {
-		return "set axis extents\n";
+	void plot(Process<Gnuplot>& gnuplot) const {
+		gnuplot << "set axis extents\n";
 	}
 	int x[2] = {0,1};
 	int y[2] = {0,1};
 };
+
+template <typename T>
+void sendData(Process<Gnuplot>& gnuplot, const std::vector<T>& obj)
+{
+    for (int i=0; i<obj.size(); ++i) {
+        gnuplot << std::to_string(i) << " " << std::to_string(obj[i]) << "\n";
+    }
+}
 
 struct LineChart
 {
@@ -29,8 +37,10 @@ struct LineChart
 	using supported_types = std::tuple<std::vector<int>,std::vector<float>>;
 
 	template<typename T>
-	std::string plotString(const T& obj) const {
-		return "plot LineChart with " + objName(obj) + "\n";
+	void plot(Process<Gnuplot>& gnuplot, const T& obj) const {
+        gnuplot << "plot '-' using 1:2\n";
+        // sendData(gnuplot, obj);
+        gnuplot << "e\n";
 	}
 };
 
@@ -40,8 +50,8 @@ struct BarChart
 	using supported_types = std::tuple<std::vector<int>,std::vector<float>>;
 
 	template<typename T>
-	std::string plotString(const T& obj) const {
-		return "plot BarChart with " + objName(obj) + "\n";
+	void plot(Process<Gnuplot>& gnuplot, const T& obj) const {
+		gnuplot << "plot BarChart with " + objName(obj) + "\n";
 	}
 };
 
@@ -53,8 +63,8 @@ struct ScatterChart
 	using supported_types = std::tuple<std::vector<Point2>>;
 
 	template<typename T>
-	std::string plotString(const T& obj) const {
-		return "plot ScatterChart with " + objName(obj) + "\n";
+	void plot(Process<Gnuplot>& gnuplot, const T& obj) const {
+		gnuplot << "plot ScatterChart with " + objName(obj) + "\n";
 	}
 };
 
@@ -69,8 +79,8 @@ struct HeatMap
 	using supported_types = std::tuple<>;
 
 	template<typename T>
-	std::string plotString(const T& obj) const { return "set style heat map\n"; }
-	std::string plotStringPost() const { return "unset style heat map\n"; }
+	void plot(Process<Gnuplot>& gnuplot, const T& obj) const { gnuplot << "set style heat map\n"; }
+	// void plotPost() const { gnuplot << "unset style heat map\n"; }
 };
 
 struct VectorIntRow

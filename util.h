@@ -111,33 +111,34 @@ struct TupleUpdater<T, Tuple, ObjTypes, 0> {
 
 // http://en.cppreference.com/w/cpp/utility/tuple/tuple
 
-class Gnuplot;
+template <typename P>
+class Process;
 
-template<class Tuple, std::size_t N>
+template<class P, class Tuple, std::size_t N>
 struct TuplePrinter {
-    static void writeStyleString(Gnuplot& gnuplot, const Tuple& t)
+    static void writeStyleString(Process<P>& gnuplot, const Tuple& t)
     {
-        TuplePrinter<Tuple, N-1>::writeStyleString(gnuplot, t);
+        TuplePrinter<P, Tuple, N-1>::writeStyleString(gnuplot, t);
         gnuplot << std::get<N-1>(t).c_str();
     }
 };
  
-template<class Tuple>
-struct TuplePrinter<Tuple, 1>{
-    static void writeStyleString(Gnuplot& gnuplot, const Tuple& t)
+template<class P, class Tuple>
+struct TuplePrinter<P, Tuple, 1>{
+    static void writeStyleString(Process<P>& gnuplot, const Tuple& t)
     {
         gnuplot << std::get<0>(t).c_str();
     }
 };
  
-template<class... Args>
-void writeStyleString(Gnuplot& gnuplot, const std::tuple<Args...>& t)
+template<class P, class... Args>
+void writeStyleString(Process<P>& gnuplot, const std::tuple<Args...>& t)
 {
-    TuplePrinter<decltype(t), sizeof...(Args)>::writeStyleString(gnuplot, t);
+    TuplePrinter<P, decltype(t), sizeof...(Args)>::writeStyleString(gnuplot, t);
 }
 
-template<class T>
-void writeStyleString(Gnuplot& gnuplot, const T& styleString)
+template<class P, class T>
+void writeStyleString(Process<P>& gnuplot, const T& styleString)
 {
     gnuplot << styleString.c_str();
 }

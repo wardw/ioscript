@@ -3,63 +3,36 @@
 #include <tuple>
 #include <type_traits>
 #include <variant>
-#include "gnuplot.h"
+#include "process.h"
 #include "util.h"
 
 #include "styles.h"
 
-template <typename T>
-struct plot_defaults;
 
-template <>
-struct plot_defaults<std::vector<int>> {
-	// using PlotStyle = image_map_style;
-	// using RowType = VectorIntRow;
-};
-
-Row writeRow(std::vector<int>& vec, int row)
+// This is called for every object to plot, along with the it's currently associated style
+// Overload to completely govern how this type is plotted
+template <typename P, typename Style, typename T>
+void plotObject(Process<P>& gnuplot, const Style& style, const T& obj)
 {
-	return row < vec.size() ? Row{row, vec[row]} : Row{};
+	style.plot(gnuplot, obj);
 }
-
-decltype(auto) rowData(const std::vector<int>& vec)
-{
-
-}
-
-template <typename Style, typename T>
-void plotObject(Gnuplot& gnuplot, const Style& style, const T& obj)
-{
-	gnuplot << style.plotString(obj);
-}
-
 
 using NoStyles = std::tuple<>;
-
 // using ChartStyles = NoStyles;
 using ChartStyles = MyStyles;
 
-
 class Qplot
 {
+    std::unique_ptr<Process<Gnuplot>> process_ = nullptr;
+
 public:
     enum class Target { DRY_RUN, STDOUT, GNUPLOT };
     static constexpr Target target = Target::STDOUT;
 
 	friend Qplot& operator<<(Qplot& qplot, const std::string& str);
 
-	Qplot()
-    {
-        switch (target)
-        {
-            case Target::DRY_RUN: gnuplot_ = std::make_unique<Gnuplot>("cat > /dev/null");  break;
-            case Target::STDOUT:  gnuplot_ = std::make_unique<Gnuplot>("cat");              break;
-            case Target::GNUPLOT: gnuplot_ = std::make_unique<Gnuplot>("gnuplot");          break;
-            default : assert(false);
-        }
-    }
-
-	ChartStyles chartStyles;
+	Qplot() : process_(std::make_unique<Process<Gnuplot>>()) {}
+	ChartStyles chartStyles_;
 
     void processArgs() {}
 
@@ -69,9 +42,9 @@ public:
               std::enable_if_t<has_supported_types<T>::value, int> = 0>
     void processArgs(const T& style, const Ts&... args)
     {
-		// Nothing to plot now, but update our current chartStyles with this style, for all variants that support it
+		// Nothing to plot now, but update our current chartStyles_ with this style, for all variants that support it
 		using ObjTypes = typename T::supported_types;
-		TupleUpdater<T, ChartStyles, ObjTypes, std::tuple_size_v<ObjTypes>>::update(chartStyles, style);
+		TupleUpdater<T, ChartStyles, ObjTypes, std::tuple_size_v<ObjTypes>>::update(chartStyles_, style);
 	
 		processArgs(args...);
     }
@@ -82,7 +55,7 @@ public:
               std::enable_if_t<!has_supported_types<T>::value, int> = 0>
     void processArgs(const T& style, const Ts&... args)
     {
-		*gnuplot_ << style.plotString();
+		style.plot(*process_);
 
 		processArgs(args...);
     }
@@ -94,11 +67,11 @@ public:
     void processArgs(const T& obj, const Ts&... args)
     {
 		// Get the style object that's currently associated with the arg type T
-		auto style = std::get<chart_traits<T>::index>(chartStyles);
+		auto style = std::get<chart_traits<T>::index>(chartStyles_);
 
 		// Plot this object
 		std::visit([this,&obj](auto&& arg) {
-			plotObject(*gnuplot_, arg, obj); 
+			plotObject(*process_, arg, obj);
 		}, style);
 
 		processArgs(args...);
@@ -109,15 +82,12 @@ public:
 	{
 		processArgs(args...);
 	}
-
-private:
-    std::unique_ptr<Gnuplot> gnuplot_ = nullptr;
 };
 
 // Direct pass-through to gnuplot
 Qplot& operator<<(Qplot& qp, const std::string& str)
 {
-	*qp.gnuplot_ << str;
+	*qp.process_ << str;
 	return qp;
 }
 
