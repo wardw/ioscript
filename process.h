@@ -5,6 +5,44 @@
 #include <streambuf>
 #include <cstdio>
 #include <cassert>
+#include <unistd.h>  // for write
+
+// Josuttis Chapter 15 p835
+class fdoutbuf : public std::streambuf
+{
+protected:
+    int fd_;
+
+public:
+    fdoutbuf(int fd) : fd_(fd) {}
+
+protected:
+    virtual int_type overflow(int_type c)
+    {
+        if (c != EOF) {
+            char z = c;
+            if (write(fd_, &z, 1) != 1) {
+                return EOF;
+            }
+        }
+        return c;
+    }
+
+    virtual std::streamsize xsputn(const char* s, std::streamsize num) {
+        return write(fd_, s, num);
+    }
+};
+
+class fd_ostream : public std::ostream
+{
+protected:
+    fdoutbuf buf_;
+
+public:
+    fd_ostream (int fd) : std::ostream(0), buf_(fd) {
+        rdbuf(&buf_);
+    }
+};
 
 // Adapted from Nicolai M. Josuttis, The C++ Standard Library - A Tutorial and Reference, 2nd Edition
 class cf_outbuffer : public std::streambuf
@@ -50,24 +88,50 @@ class Process
 {
 public:
     Process() {
+        // First open a new pipe
+        if (pipe(filedes_) == -1) {
+            std::cout << "pipe() returned with error" << std::endl;
+        }
+
+        // Then fork process
         if (!(file_ = popen(T::cmd, "w"))) {
-            std::cout << "popen returned with error";
+            std::cout << "popen returned with error" << std::endl;
             assert(false);  // todo
         }
 
-	    fout_ = std::make_unique<cf_ostream>(file_);
-    }
-    ~Process() { pclose(file_); }
+        // Closed unused read end of the pipe on this process
+        if (close(filedes_[0]) == -1)
+            std::cout << "error closing filedes[0]" << std::endl;
 
-    friend Process& operator<<(Process& proces, const std::string& text) {
-        *proces.fout_ << text.c_str();
-        return proces;
+        cfout_ = std::make_unique<cf_ostream>(file_);
+        fdout_ = std::make_unique<fd_ostream>(filedes_[1]);
+
+        std::cout << "Pipe opened with read end " << filedes_[0] << " and write end " << filedes_[1] << std::endl;
+    }
+    ~Process() {
+        // close data pipe
+        if (close(filedes_[1]) == -1)
+            std::cout << "close(filedes_[1]) returned with error" << std::endl;
+
+        // close stdin pipe
+        pclose(file_);
+    }
+
+    friend Process& operator<<(Process& process, const std::string& text) {
+        *process.cfout_ << text.c_str();
+        return process;
     }
 
     Process(const Process&) = delete;
     Process& operator=(const Process&) = delete;
 
+    cf_ostream& cfout() { return *cfout_; }
+    fd_ostream& fdout() { return *fdout_; }
+
 private:
-    std::unique_ptr<cf_ostream> fout_;
+    std::unique_ptr<cf_ostream> cfout_;
+    std::unique_ptr<fd_ostream> fdout_;
+
+    int filedes_[2];
     FILE* file_;
 };

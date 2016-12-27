@@ -14,31 +14,42 @@
 template <typename P, typename Style, typename T>
 void plotObject(Process<P>& gnuplot, const Style& style, const T& obj)
 {
-	style.plot(gnuplot, obj);
+}
+
+// Note that this will be instantiated for all style variants associated with the obj type (regardless of the actual obj type)
+template <typename Style, typename T,
+          std::enable_if_t<has_plot<Style, void(Process<Gnuplot>&,const T&)>::value, int> = 0>
+void plotObject(Process<Gnuplot>& gnuplot, const Style& style, const T& obj)
+{
+    style.plot(gnuplot, obj);
+}
+
+template <typename Style, typename T,
+          std::enable_if_t<has_plot<Style, void(Process<Mpl>&,const T&)>::value, int> = 0>
+void plotObject(Process<Mpl>& mpl, const Style& style, const T& obj)
+{
+    style.plot(mpl, obj);
 }
 
 using NoStyles = std::tuple<>;
 // using ChartStyles = NoStyles;
 using ChartStyles = MyStyles;
 
+template <typename P>
 class Qplot
 {
-    std::unique_ptr<Process<Gnuplot>> process_ = nullptr;
+    std::unique_ptr<Process<P>> process_ = nullptr;
 
 public:
-    enum class Target { DRY_RUN, STDOUT, GNUPLOT };
-    static constexpr Target target = Target::STDOUT;
 
-	friend Qplot& operator<<(Qplot& qplot, const std::string& str);
-
-	Qplot() : process_(std::make_unique<Process<Gnuplot>>()) {}
+	Qplot() : process_(std::make_unique<Process<P>>()) {}
 	ChartStyles chartStyles_;
 
     void processArgs() {}
 
 	// Arg is an object style
     template <typename T, typename... Ts,
-			  int P = T::pass,
+			  int pass = T::pass,
               std::enable_if_t<has_supported_types<T>::value, int> = 0>
     void processArgs(const T& style, const Ts&... args)
     {
@@ -51,7 +62,7 @@ public:
 
 	// Arg is a canvas style
     template <typename T, typename... Ts,
-			  int P = T::pass,
+			  int pass = T::pass,
               std::enable_if_t<!has_supported_types<T>::value, int> = 0>
     void processArgs(const T& style, const Ts&... args)
     {
@@ -66,13 +77,13 @@ public:
 			// int I = chart_traits<T>::index>
     void processArgs(const T& obj, const Ts&... args)
     {
-		// Get the style object that's currently associated with the arg type T
-		auto style = std::get<chart_traits<T>::index>(chartStyles_);
+		// Get the style variant that's currently associated with the arg type T
+		auto styleVariants = std::get<chart_traits<T>::index>(chartStyles_);
 
 		// Plot this object
 		std::visit([this,&obj](auto&& arg) {
 			plotObject(*process_, arg, obj);
-		}, style);
+		}, styleVariants);
 
 		processArgs(args...);
     }
@@ -82,19 +93,18 @@ public:
 	{
 		processArgs(args...);
 	}
+
+    friend Qplot& operator<<(Qplot& qplot, const std::string& str) {
+        *qplot.process_ << str;
+        return qplot;
+    }
+
 };
 
-// Direct pass-through to gnuplot
-Qplot& operator<<(Qplot& qp, const std::string& str)
-{
-	*qp.process_ << str;
-	return qp;
-}
-
 // Main convenience method for one-liner plotting
-template <typename... Ts>
-void qplot(const Ts&... args)
-{
-    static Qplot qp;
-    qp.plot(args...);
-}
+// template <typename... Ts>
+// void qplot(const Ts&... args)
+// {
+//     static Qplot qp;
+//     qp.plot(args...);
+// }

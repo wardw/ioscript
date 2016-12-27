@@ -9,7 +9,7 @@ std::string objName(const T& obj)
 {
 	std::ostringstream os;
 	int info;
-    os << abi::__cxa_demangle(typeid(obj).name(),0,0,&info) << std::endl;
+    os << abi::__cxa_demangle(typeid(obj).name(),0,0,&info);
 	return os.str();
 }
 
@@ -142,3 +142,32 @@ void writeStyleString(Process<P>& gnuplot, const T& styleString)
 {
     gnuplot << styleString.c_str();
 }
+
+
+// Determine wether a plot method of the right type exists for a class
+// Adapted from http://stackoverflow.com/a/16824239/254035
+
+template<typename, typename T>
+struct has_plot {
+    static_assert(std::integral_constant<T,false>::value,
+                  "Second template parameter needs to be of function type.");
+};
+
+// specialization that does the checking
+
+template<typename C, typename Ret, typename... Args>
+struct has_plot<C, Ret(Args...)> {
+private:
+    template<typename T>
+    static constexpr auto check(T*) -> typename std::is_same<
+            decltype(std::declval<T>().plot(std::declval<Args>()...)), Ret
+            >::type;
+
+    template<typename>
+    static constexpr std::false_type check(...);
+
+    using type = decltype(check<C>(0));
+
+public:
+    static constexpr bool value = type::value;
+};

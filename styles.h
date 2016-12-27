@@ -42,6 +42,23 @@ struct LineChart
         // sendData(gnuplot, obj);
         gnuplot << "e\n";
 	}
+
+	template<typename T>
+	void plot(Process<Mpl>& mpl, const T& obj) const {
+        // mpl << "print \"hello python\"\n";
+        mpl <<
+R"(
+import os
+os.close(4)
+fo = os.fdopen(3, 'r')
+for line in fo:
+    print "(Python) " + line,
+print "(Python) Done"
+)"
+		<< "\n";
+
+		mpl.fdout() << "1\n2\n3\n4\n5\n";
+	}
 };
 
 struct BarChart
@@ -52,6 +69,13 @@ struct BarChart
 	template<typename T>
 	void plot(Process<Gnuplot>& gnuplot, const T& obj) const {
 		gnuplot << "plot BarChart with " + objName(obj) + "\n";
+	}
+
+	template<typename T>
+	void plot(Process<Mpl>& gnuplot, const T& obj) const {
+        gnuplot << "plot '-' using 1:2\n";
+        // sendData(gnuplot, obj);
+        gnuplot << "e\n";
 	}
 };
 
