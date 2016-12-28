@@ -83,8 +83,8 @@ struct Null    { static constexpr const char* cmd = "cat > /dev/null"; };
 struct Cat     { static constexpr const char* cmd = "cat"; };
 struct Gnuplot { static constexpr const char* cmd = "gnuplot"; };
 // struct Gnuplot { static constexpr const char* cmd = "cat"; };
-struct Mpl     { static constexpr const char* cmd = "python"; };
-// struct Mpl     { static constexpr const char* cmd = "cat"; };
+// struct Mpl     { static constexpr const char* cmd = "python"; };
+struct Mpl     { static constexpr const char* cmd = "cat"; };
 
 template <typename T>
 class Process

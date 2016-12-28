@@ -102,11 +102,12 @@ void example1()
 	Qplot<Gnuplot> qplot1;
 	// qplot1.plot(ints, AxisExtents{{0,1}, {0,2}}, ImageSize{400,300}, ints);
     // qplot1.plot(ints, BarChart(), ints, ints, LineChart(), ints);
-    qplot1.plot(Filename("data1d"), LineChart(), ints);
+    // qplot1.plot(Filename("data1d"), LineChart(), ints);
 
 
 	Qplot<Mpl> qplot2(Header{});
 	// qplot2.plot(ints, AxisExtents{{0,1}, {0,2}}, ImageSize{400,300}, ints);
     // qplot2.plot(ints, ints, ints, LineChart(), ints);
+    qplot2.plot(LineChart(), ints);
     qplot2.plot(LineChart(), ints, ints);
 }

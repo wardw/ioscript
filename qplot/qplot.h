@@ -5,6 +5,8 @@
 #include <type_traits>
 #include <variant>
 #include <any>
+#include <ostream>
+
 #include "process.h"
 #include "util.h"
 
@@ -61,15 +63,21 @@ template <typename P>
 class Qplot
 {
     std::unique_ptr<Process<P>> process_ = nullptr;
-    bool bHeader = true;
+    std::ostringstream header_;
 
 public:
     template <typename... Ts>
 	Qplot(Ts&&... args) : process_(std::make_unique<Process<P>>())
     {
-        // Process as normal, but as bHeader starts true, we capture output in order to resend along with each subsequent plot command
+        // Everything to cfout goes to our local ostringstream
+        auto cout_buffer = process_->cfout().rdbuf();
+        process_->cfout().rdbuf(header_.rdbuf());
+
+        // Capture in local header_ buffer
         processArgs(args...);
-        bHeader = false;
+
+        // Swap back
+        process_->cfout().rdbuf(cout_buffer);
     }
 
     PlotStyles plotStyles_;
@@ -123,7 +131,7 @@ public:
 	void plot(const Ts&... args)
 	{
         // Process header
-
+        *this << header_.str();
 
         // Recuse into arguments
 		processArgs(args...);
@@ -137,11 +145,7 @@ public:
     template <typename U>
     friend Qplot& operator<<(Qplot& qplot, const U& str)
     {
-        if (true)
-            *qplot.process_ << str;
-        else
-            *qplot.process_ << str;
-
+        *qplot.process_ << str;
         return qplot;
     }
 };
