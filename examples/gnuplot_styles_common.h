@@ -4,8 +4,9 @@
 
 struct Filename
 {
+	using supported_types = std::tuple<>;
+
 	Filename(const std::string& filename) : filename(filename) {}
-	static constexpr int pass = 1;
 
 	void plot(Process<Gnuplot>& gnuplot) const
 	{
@@ -24,7 +25,7 @@ struct Colours
 	};
 
 	Colours(Palette palette) : palette_(palette) {}
-	static constexpr int pass = 0;
+	using supported_types = std::tuple<>;
 
 	void plot(Process<Gnuplot>& gnuplot) const {
 		switch (palette_)

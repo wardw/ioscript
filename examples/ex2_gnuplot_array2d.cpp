@@ -12,7 +12,6 @@ using Array2d = std::array<std::array<int, 10>, 10>;
 
 struct HeatMap
 {
-	static constexpr int pass = 1;
 	using supported_types = std::tuple<Array2d>;
 
 	template<typename T>
@@ -33,7 +32,6 @@ struct HeatMap
 
 struct NumberGrid
 {
-	static constexpr int pass = 1;
 	using supported_types = std::tuple<Array2d>;
 
 	template<typename T>

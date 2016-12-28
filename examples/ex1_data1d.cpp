@@ -14,7 +14,7 @@ void sendData(Process<Gnuplot>& gnuplot, const std::vector<T>& obj)
 
 struct Header
 {
-	static constexpr int pass = 1;
+	using supported_types = std::tuple<>;
 
 	void plot(Process<Mpl>& mpl) const {
         mpl <<
@@ -29,7 +29,6 @@ fo = os.fdopen(3, 'r')
 
 struct BarChart
 {
-	static constexpr int pass = 1;
 	using supported_types = std::tuple<std::vector<int>,std::vector<float>>;
 
 	template<typename T>
@@ -49,7 +48,6 @@ struct BarChart
 
 struct LineChart
 {
-	static constexpr int pass = 1;
 	using supported_types = std::tuple<std::vector<int>,std::vector<float>>;
 
 	template<typename T>

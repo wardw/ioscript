@@ -39,25 +39,37 @@ using tuple_contains_type = typename has_type<T, 0, Tuple>::type;
 
 
 // has_supported_types<T> tests wether T::foo exists as a nested type
+// The idea is that if Check<T> is a valid substitution (and so T exists), this template is enabled
 // Modified from http://stackoverflow.com/a/11816999/254035
 
 template<class T>
-struct TestType {
+struct Check {
     using type = void;
 };
 
+// A style is any type for which the nested type `supported_types` exists, regardless of its type
+template<class T, class U = void>
+struct is_style {
+    static constexpr bool value = false;
+};
+
+template<class T>
+struct is_style<T, typename Check<typename T::supported_types>::type> {
+    static constexpr bool value = true;
+};
+
+// has_supported_types must include at least one tuple element to be true (perhaps consider this is_object_style)
 template<class T, class U = void>
 struct has_supported_types {
     static constexpr bool value = false;
 };
 
-// The idea is that if TestType<T> is a valid substitution (and so T exists), this template is enabled
 template<class T>
-struct has_supported_types<T, typename TestType<typename T::supported_types>::type> {
+// struct has_supported_types<T, typename Check<std::tuple_element<0,typename T::supported_types>>::type> {
+struct has_supported_types<T, typename std::enable_if<std::tuple_size<typename T::supported_types>::value != 0>::type> {
     static constexpr bool value = true;
 };
 
-// has_pass<T> tests wether T::pass exists as a static constant (substituable with int N) 
 
 template<int N>
 struct TestNontype {

@@ -5,7 +5,7 @@
 
 struct ImageSize
 {
-	static constexpr int pass = 0;
+	using supported_types = std::tuple<>;
 
 	void plot(Process<Gnuplot>& gnuplot) const {
 		gnuplot << "set image size " + std::to_string(x) + "," + std::to_string(y) + "\n";
@@ -16,7 +16,7 @@ struct ImageSize
 
 struct AxisExtents
 {
-	static constexpr int pass = 0;
+	using supported_types = std::tuple<>;
 	
 	void plot(Process<Gnuplot>& gnuplot) const {
 		gnuplot << "set axis extents\n";
@@ -29,7 +29,6 @@ struct Point2 { float x; float y; };
 
 struct ScatterChart
 {
-	static constexpr int pass = 1;
 	using supported_types = std::tuple<std::vector<Point2>>;
 
 	template<typename T>

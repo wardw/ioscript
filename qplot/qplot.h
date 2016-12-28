@@ -80,8 +80,8 @@ public:
 
 	// Arg is style (for an object)
     template <typename T, typename... Ts,
-			  int pass = T::pass,
-              std::enable_if_t<has_supported_types<T>::value, int> = 0>
+              std::enable_if_t<is_style<T>::value &&
+                               has_supported_types<T>::value, int> = 0>
     void processArgs(const T& style, const Ts&... args)
     {
 		// Nothing to plot now, but update our plotStyles_ with this style where variants that support it
@@ -94,8 +94,9 @@ public:
 
 	// Arg is a style (for the canvas)
     template <typename T, typename... Ts,
-			  int pass = T::pass,
-              std::enable_if_t<!has_supported_types<T>::value, int> = 0>
+              std::enable_if_t<is_style<T>::value &&
+                               !has_supported_types<T>::value, int> = 0>
+              // std::enable_if_t<is_style<T>::value, int> = 0> // &&
     void processArgs(const T& style, const Ts&... args)
     {
         plotStyle(*process_, style);
@@ -105,7 +106,7 @@ public:
 
 	// Arg is an object to plot
     template <typename T, typename... Ts,
-              std::enable_if_t<!has_pass<T>::value, int> = 0>
+              std::enable_if_t<!is_style<T>::value, int> = 0>
     void processArgs(const T& obj, const Ts&... args)
     {
 		// Get the style variant that's currently associated with the arg type T
@@ -124,14 +125,20 @@ public:
     template <typename... Ts>
 	void plot(const Ts&... args)
 	{
+        // Process header
+
+
+        // Recuse into arguments
 		processArgs(args...);
+
+        // Post process
 	}
 
+    // todo
     friend Qplot& operator<<(Qplot& qplot, const std::string& str) {
         *qplot.process_ << str;
         return qplot;
     }
-
 };
 
 // Main convenience method for one-liner plotting

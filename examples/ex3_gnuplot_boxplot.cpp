@@ -13,7 +13,6 @@ using BoxPlotRow = std::tuple<int,int,float>;
 
 struct BoxPlot
 {
-	static constexpr int pass = 1;
 	using supported_types = std::tuple<std::vector<BoxPlotRow>>;  // todo: something like Colums<3>
 
 	template<typename T>
