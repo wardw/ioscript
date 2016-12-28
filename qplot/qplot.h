@@ -62,6 +62,9 @@ void plotStyle(Process<Mpl>& mpl, const Style& style)
 using PlotStyles = std::unordered_map<size_t, std::any>;
 // using PlotStyles = std::array<std::any, MAX_STYLES>;
 
+// Specializations in client code
+template <typename T> struct plot_traits;
+
 template <typename P>
 class Qplot
 {
