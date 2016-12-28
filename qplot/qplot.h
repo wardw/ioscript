@@ -6,7 +6,8 @@
 #include "process.h"
 #include "util.h"
 
-#include "styles.h"
+// todo
+#include "examples/styles.h"
 
 // These non-members are called for every object to plot, along with the it's currently associated style
 // Overload to completely govern how this type is plotted
@@ -14,8 +15,9 @@
 // Plotting styles associated to objects
 
 template <typename P, typename Style, typename T>
-void plotObject(Process<P>& gnuplot, const Style& style, const T& obj)
+void plotObject(Process<P>& process, const Style& style, const T& obj)
 {
+    // style.plot(process, obj);
 }
 
 // Note that this will be instantiated for all style variants associated with the obj type (regardless of the actual obj type)
@@ -36,8 +38,9 @@ void plotObject(Process<Mpl>& mpl, const Style& style, const T& obj)
 // Plotting styles with no associated object
 
 template <typename P, typename Style>
-void plotStyle(Process<P>& gnuplot, const Style& style)
+void plotStyle(Process<P>& process, const Style& style)
 {
+    // style.plot(process);
 }
 
 template <typename Style,

@@ -80,7 +80,9 @@ protected:
 };
 
 struct Null    { static constexpr const char* cmd = "cat > /dev/null"; };
-struct Gnuplot { static constexpr const char* cmd = "cat"; };  // temporary while testing
+struct Cat     { static constexpr const char* cmd = "cat"; };
+struct Gnuplot { static constexpr const char* cmd = "gnuplot"; };
+// struct Gnuplot { static constexpr const char* cmd = "cat"; };
 struct Mpl     { static constexpr const char* cmd = "python"; };
 
 template <typename T>
@@ -113,12 +115,13 @@ public:
         if (close(filedes_[1]) == -1)
             std::cout << "close(filedes_[1]) returned with error" << std::endl;
 
-        // close stdin pipe
+        // close process
         pclose(file_);
     }
 
-    friend Process& operator<<(Process& process, const std::string& text) {
-        *process.cfout_ << text.c_str();
+    template <typename U>
+    friend Process& operator<<(Process& process, const U& obj) {
+        *process.cfout_ << obj;
         return process;
     }
 
