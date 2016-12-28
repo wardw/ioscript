@@ -5,7 +5,7 @@
 using namespace std;
 
 template <typename T>
-void sendData(Process<Gnuplot>& gnuplot, const std::vector<T>& obj)
+void sendData(Qplot<Gnuplot>& gnuplot, const std::vector<T>& obj)
 {
     for (int i=0; i<obj.size(); ++i) {
         gnuplot << std::to_string(i) << " " << std::to_string(obj[i]) << "\n";
@@ -16,7 +16,7 @@ struct Header
 {
 	using supported_types = std::tuple<>;
 
-	void plot(Process<Mpl>& mpl) const {
+	void plot(Qplot<Mpl>& mpl) const {
         mpl <<
 R"(
 import os
@@ -32,7 +32,7 @@ struct BarChart
 	using supported_types = std::tuple<std::vector<int>,std::vector<float>>;
 
 	template<typename T>
-	void plot(Process<Gnuplot>& gnuplot, const T& obj) const
+	void plot(Qplot<Gnuplot>& gnuplot, const T& obj) const
 	{
         gnuplot << "plot '-' using 1:2\n";
         sendData(gnuplot, obj);
@@ -40,7 +40,7 @@ struct BarChart
 	}
 
 	template<typename T>
-	void plot(Process<Mpl>& mpl, const T& obj) const
+	void plot(Qplot<Mpl>& mpl, const T& obj) const
 	{
 		mpl << "print \"(python) todo: plot BarChart with " + objName(obj) + "\"\n";
 	}
@@ -50,8 +50,16 @@ struct LineChart
 {
 	using supported_types = std::tuple<std::vector<int>,std::vector<float>>;
 
+	// template<typename T>
+	// void plot(Qplot<Gnuplot>& qp, const T& obj) const
+	// {
+ //        qp << "plot '-' using 1:2\n";
+ //        sendData(qp, obj);
+ //        qp << "e\n";
+	// }
+
 	template<typename T>
-	void plot(Process<Gnuplot>& gnuplot, const T& obj) const
+	void plot(Qplot<Gnuplot>& gnuplot, const T& obj) const
 	{
         gnuplot << "plot '-' using 1:2\n";
         sendData(gnuplot, obj);
@@ -59,7 +67,7 @@ struct LineChart
 	}
 
 	template<typename T>
-	void plot(Process<Mpl>& mpl, const T& obj) const
+	void plot(Qplot<Mpl>& mpl, const T& obj) const
 	{
         mpl <<
 R"(
@@ -97,8 +105,8 @@ void example1()
     qplot1.plot(Filename("data1d"), LineChart(), ints);
 
 
-	Qplot<Mpl> qplot2;
+	Qplot<Mpl> qplot2(Header{});
 	// qplot2.plot(ints, AxisExtents{{0,1}, {0,2}}, ImageSize{400,300}, ints);
     // qplot2.plot(ints, ints, ints, LineChart(), ints);
-    qplot2.plot(Header(), LineChart(), ints, ints);
+    qplot2.plot(LineChart(), ints, ints);
 }

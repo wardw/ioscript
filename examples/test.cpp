@@ -11,7 +11,7 @@ struct CanvasStyle
 
 	CanvasStyle(const std::string& filename) : filename(filename) {}
 
-	void plot(Process<Gnuplot>& gnuplot) const
+	void plot(Qplot<Gnuplot>& gnuplot) const
 	{
         gnuplot << "set output '" << filename << ".png'\n"
                 << "set terminal pngcairo size 500, 500\n";
@@ -24,7 +24,7 @@ struct ObjectStyle
 	using supported_types = std::tuple<std::vector<int>,std::vector<float>>;
 
 	template<typename T>
-	void plot(Process<Gnuplot>& gnuplot, const T& obj) const
+	void plot(Qplot<Gnuplot>& gnuplot, const T& obj) const
 	{
         gnuplot << "plot '-' using 1:2\n";
         sendData(gnuplot, obj);

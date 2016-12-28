@@ -16,17 +16,20 @@
 
 // Plotting styles associated to objects
 
+template <typename P>
+class Qplot;
+
 template <typename P, typename Style, typename T,
-          std::enable_if_t<!has_plot_member<Style, void(Process<P>&,const T&)>::value, int> = 0>
-void plotObject(Process<P>& process, const Style& style, const T& obj)
+          std::enable_if_t<!has_plot_member<Style, void(Qplot<P>&,const T&)>::value, int> = 0>
+void plotObject(Qplot<P>& process, const Style& style, const T& obj)
 {
     // Do nothing where no plot member exists for this Process<P>
 }
 
 // Note that this will be instantiated for all style variants associated with the obj type (regardless of the actual obj type)
 template <typename P, typename Style, typename T,
-          std::enable_if_t<has_plot_member<Style, void(Process<P>&,const T&)>::value, int> = 0>
-void plotObject(Process<P>& process, const Style& style, const T& obj)
+          std::enable_if_t<has_plot_member<Style, void(Qplot<P>&,const T&)>::value, int> = 0>
+void plotObject(Qplot<P>& process, const Style& style, const T& obj)
 {
     style.plot(process, obj);
 }
@@ -34,15 +37,15 @@ void plotObject(Process<P>& process, const Style& style, const T& obj)
 // Plotting styles with no associated object
 
 template <typename P, typename Style,
-          std::enable_if_t<!has_plot_member<Style, void(Process<P>&)>::value, int> = 0>
-void plotStyle(Process<P>& process, const Style& style)
+          std::enable_if_t<!has_plot_member<Style, void(Qplot<P>&)>::value, int> = 0>
+void plotStyle(Qplot<P>& process, const Style& style)
 {
     // Do nothing where no plot member exists for this Process<P>
 }
 
 template <typename P, typename Style,
-          std::enable_if_t<has_plot_member<Style, void(Process<P>&)>::value, int> = 0>
-void plotStyle(Process<P>& process, const Style& style)
+          std::enable_if_t<has_plot_member<Style, void(Qplot<P>&)>::value, int> = 0>
+void plotStyle(Qplot<P>& process, const Style& style)
 {
     style.plot(process);
 }
@@ -58,10 +61,16 @@ template <typename P>
 class Qplot
 {
     std::unique_ptr<Process<P>> process_ = nullptr;
+    bool bHeader = true;
 
 public:
-
-	Qplot() : process_(std::make_unique<Process<P>>()) {}
+    template <typename... Ts>
+	Qplot(Ts&&... args) : process_(std::make_unique<Process<P>>())
+    {
+        // Process as normal, but as bHeader starts true, we capture output in order to resend along with each subsequent plot command
+        processArgs(args...);
+        bHeader = false;
+    }
 
     PlotStyles plotStyles_;
 
@@ -87,7 +96,7 @@ public:
                                !has_supported_types<T>::value, int> = 0>
     void processArgs(const T& style, const Ts&... args)
     {
-        plotStyle(*process_, style);
+        plotStyle(*this, style);
 
 		processArgs(args...);
     }
@@ -104,7 +113,7 @@ public:
 
 		// Plot this object
 		std::visit([this,&obj](auto&& arg) {
-			plotObject(*process_, arg, obj);
+			plotObject(*this, arg, obj);
 		}, styleVar);
 
 		processArgs(args...);
@@ -122,9 +131,17 @@ public:
         // Post process
 	}
 
-    // todo
-    friend Qplot& operator<<(Qplot& qplot, const std::string& str) {
-        *qplot.process_ << str;
+    // cf_ostream& cfout() { return *cfout_; }
+    fd_ostream& fdout() { return process_->fdout(); }
+
+    template <typename U>
+    friend Qplot& operator<<(Qplot& qplot, const U& str)
+    {
+        if (true)
+            *qplot.process_ << str;
+        else
+            *qplot.process_ << str;
+
         return qplot;
     }
 };
