@@ -1,8 +1,12 @@
 #pragma once
 
 #include <iomanip>
+#include <array>
 
 #include "examples.h"
+
+// A few client data types we want to be able to plot
+using Array2d = std::array<std::array<int, 10>, 10>;
 
 struct ImageSize
 {
@@ -13,6 +17,29 @@ struct ImageSize
 	}
 	int x = 800;
 	int y = 640;
+};
+
+struct Colours
+{
+	enum Palette {
+		OCEAN,
+		RAINBOW,
+		HOT
+	};
+
+	Colours(Palette palette) : palette_(palette) {}
+	static constexpr int pass = 0;
+
+	void plot(Process<Gnuplot>& gnuplot) const {
+		switch (palette_)
+		{
+			case OCEAN:    gnuplot << "set palette rgbformulae 23,28,3 \n";  break;
+			case RAINBOW:  gnuplot << "set palette rgbformulae 33,13,10\n";  break;
+			case HOT:      gnuplot << "set palette rgbformulae 21,22,23\n";  break;
+		}
+
+	}
+	Palette palette_;
 };
 
 struct AxisExtents
@@ -195,24 +222,65 @@ struct Row
 struct HeatMap
 {
 	static constexpr int pass = 1;
-	using supported_types = std::tuple<>;
+	using supported_types = std::tuple<Array2d>;
 
 	template<typename T>
-	void plot(Process<Gnuplot>& gnuplot, const T& obj) const { gnuplot << "set style heat map\n"; }
-	// void plotPost() const { gnuplot << "unset style heat map\n"; }
+	void plot(Process<Gnuplot>& gnuplot, const T& obj) const
+	{
+    	gnuplot <<  "plot '-' using 1:2:3 with image\n";
+
+    	for (int i=0; i<obj.size(); i++)
+    	{
+    		for (int j=0; j<obj[0].size(); j++)
+    		{
+    			gnuplot << i << " " << j << " " << obj[i][j] << '\n';
+    		}
+    	}
+    	gnuplot << "e\n";
+	}
+};
+
+struct NumberGrid
+{
+	static constexpr int pass = 1;
+	using supported_types = std::tuple<Array2d>;
+
+	template<typename T>
+	void plot(Process<Gnuplot>& gnuplot, const T& obj) const
+	{
+    	gnuplot <<  "plot '-' using 1:2:($3 == 0 ? \"\" : sprintf(\"%4.2f\",$3) ) with labels font \"PTMono,8\"\n";
+    	// gnuplot <<  ", '-' using 1:2:($3 == 0 ? \"\" : sprintf(\"%4.2f\",$3) ) with labels font \"PTMono,8\"\n";
+
+    	for (int i=0; i<obj.size(); i++)
+    	{
+    		for (int j=0; j<obj[0].size(); j++)
+    		{
+    			gnuplot << i << " " << j << " " << obj[i][j] << '\n';
+    		}
+    	}
+    	gnuplot << "e\n";
+	}
 };
 
 
 // Previously used a tuple<> rather than a map<size_t,any>
 // However a tuple requires statically writing a tuple type with each variant's tuple index matching it's id
 
+
+// Define a mapping from the type of plot to the styles that are available to draw it
+
 struct Data1d          { static constexpr size_t id = 0; using supported_styles = std::variant<LineChart, BarChart>; };
 struct Data2dPoints    { static constexpr size_t id = 1; using supported_styles = std::variant<>; };  // PointChart
 struct WidgetData      { static constexpr size_t id = 2; using supported_styles = std::variant<Candlestick>; };
-struct ScalarFieldData { static constexpr size_t id = 3; using supported_styles = std::variant<HeatMap>; };
+struct Scalar2d        { static constexpr size_t id = 3; using supported_styles = std::variant<HeatMap, NumberGrid>; };
+
+
+// Define a mapping from the client's object types to the type of plot data it represents
 
 template <typename T> struct plot_traits;
 template <> struct plot_traits<std::vector<CandlestickRow>> { using type = WidgetData; };
 template <> struct plot_traits<std::vector<int>>            { using type = Data1d; };
 template <> struct plot_traits<std::vector<float>>          { using type = Data1d; };
 template <> struct plot_traits<std::vector<Point2>>         { using type = Data2dPoints; };
+template <> struct plot_traits<Array2d>                     { using type = Scalar2d; };
+template <> struct plot_traits<NumberGrid>                  { using type = Scalar2d; };

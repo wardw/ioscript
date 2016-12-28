@@ -45,9 +45,27 @@ void candlestick_example(Qplot<Gnuplot>& qplot)
     qplot.plot(Filename("candle"), Candlestick(), data);
 }
 
+void array2d_example(Qplot<Gnuplot>& qplot)
+{
+	Array2d array;
+	for (int i=0; i<array.size(); i++)
+    {
+    	for (int j=0; j<array[0].size(); j++)
+  		{
+			array[i][j] = i - j;
+    	}
+    }
+
+    qplot.plot(Filename("grid1"), Colours(Colours::RAINBOW), HeatMap(), array);
+    qplot.plot(Filename("grid2"), NumberGrid(), array);
+
+    // qplot.plot(Filename("grid2"), HeatMap(), array, NumberGrid(), array);
+}
+
 void examples()
 {
 	Qplot<Gnuplot> qplot;
 
-    candlestick_example(qplot);
+    // candlestick_example(qplot);
+    array2d_example(qplot);
 }
