@@ -83,8 +83,8 @@ struct Null    { static constexpr const char* cmd = "cat > /dev/null"; };
 struct Cat     { static constexpr const char* cmd = "cat"; };
 struct Gnuplot { static constexpr const char* cmd = "gnuplot"; };
 // struct Gnuplot { static constexpr const char* cmd = "cat"; };
-// struct Mpl     { static constexpr const char* cmd = "python"; };
-struct Mpl     { static constexpr const char* cmd = "cat"; };
+struct Mpl     { static constexpr const char* cmd = "python"; };
+// struct Mpl     { static constexpr const char* cmd = "cat"; };
 
 template <typename T>
 class Process
@@ -131,6 +131,9 @@ public:
 
     cf_ostream& cfout() { return *cfout_; }
     fd_ostream& fdout() { return *fdout_; }
+
+    int fd_r() { return filedes_[0]; }
+    int fd_w() { return filedes_[1]; }
 
 private:
     std::unique_ptr<cf_ostream> cfout_;

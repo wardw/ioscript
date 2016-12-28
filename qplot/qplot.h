@@ -136,11 +136,18 @@ public:
         // Recuse into arguments
 		processArgs(args...);
 
-        // Post process
+        // Finally, close this process and reopen with a fresh instance
+        // + This ends out code stream to the process, which e.g. for python alows the process to start executin
+        // + Also important that each call to plot (aside from the intentional header) is stateless
+        process_.reset();  // destory first
+        process_ = std::make_unique<Process<P>>();
 	}
 
     // cf_ostream& cfout() { return *cfout_; }
     fd_ostream& fdout() { return process_->fdout(); }
+
+    int fd_r() { return process_->fd_r(); }
+    int fd_w() { return process_->fd_w(); }
 
     template <typename U>
     friend Qplot& operator<<(Qplot& qplot, const U& str)

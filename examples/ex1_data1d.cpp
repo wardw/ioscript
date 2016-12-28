@@ -20,8 +20,8 @@ struct Header
         mpl <<
 R"(
 import os
-os.close(5)
-fo = os.fdopen(3, 'r')
+os.close( )" << mpl.fd_w() << R"( )
+fo = os.fdopen( )" << mpl.fd_r() << R"(, 'r')
 )"
 		<< "\n";
 	}
@@ -94,12 +94,12 @@ template <> struct plot_traits<std::vector<float>> { using type = Data1d; };
 
 void example1()
 {
-	std::vector<int> ints = {1,2,3,4,5,6,7};
+	std::vector<int> ints = {1,2,3};
 
 	// Watchit: style must but passed first since we no longer have the chartStyles tuple for default initialzation
 	// Watchit: todo MPL example wait issue - hard coded pipe fd's
 
-	Qplot<Gnuplot> qplot1;
+	// Qplot<Gnuplot> qplot1;
 	// qplot1.plot(ints, AxisExtents{{0,1}, {0,2}}, ImageSize{400,300}, ints);
     // qplot1.plot(ints, BarChart(), ints, ints, LineChart(), ints);
     // qplot1.plot(Filename("data1d"), LineChart(), ints);
@@ -110,4 +110,5 @@ void example1()
     // qplot2.plot(ints, ints, ints, LineChart(), ints);
     qplot2.plot(LineChart(), ints);
     qplot2.plot(LineChart(), ints, ints);
+    qplot2.plot(LineChart(), ints);
 }
