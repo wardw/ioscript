@@ -166,7 +166,7 @@ void writeStyleString(Process<P>& gnuplot, const T& styleString)
 // Adapted from http://stackoverflow.com/a/16824239/254035
 
 template<typename, typename T>
-struct has_plot {
+struct has_plot_member {
     static_assert(std::integral_constant<T,false>::value,
                   "Second template parameter needs to be of function type.");
 };
@@ -174,7 +174,7 @@ struct has_plot {
 // specialization that does the checking
 
 template<typename C, typename Ret, typename... Args>
-struct has_plot<C, Ret(Args...)> {
+struct has_plot_member<C, Ret(Args...)> {
 private:
     template<typename T>
     static constexpr auto check(T*) -> typename std::is_same<

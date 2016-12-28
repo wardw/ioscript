@@ -16,48 +16,37 @@
 
 // Plotting styles associated to objects
 
-template <typename P, typename Style, typename T>
+template <typename P, typename Style, typename T,
+          std::enable_if_t<!has_plot_member<Style, void(Process<P>&,const T&)>::value, int> = 0>
 void plotObject(Process<P>& process, const Style& style, const T& obj)
 {
-    // style.plot(process, obj);
+    // Do nothing where no plot member exists for this Process<P>
 }
 
 // Note that this will be instantiated for all style variants associated with the obj type (regardless of the actual obj type)
-template <typename Style, typename T,
-          std::enable_if_t<has_plot<Style, void(Process<Gnuplot>&,const T&)>::value, int> = 0>
-void plotObject(Process<Gnuplot>& gnuplot, const Style& style, const T& obj)
+template <typename P, typename Style, typename T,
+          std::enable_if_t<has_plot_member<Style, void(Process<P>&,const T&)>::value, int> = 0>
+void plotObject(Process<P>& process, const Style& style, const T& obj)
 {
-    style.plot(gnuplot, obj);
-}
-
-template <typename Style, typename T,
-          std::enable_if_t<has_plot<Style, void(Process<Mpl>&,const T&)>::value, int> = 0>
-void plotObject(Process<Mpl>& mpl, const Style& style, const T& obj)
-{
-    style.plot(mpl, obj);
+    style.plot(process, obj);
 }
 
 // Plotting styles with no associated object
 
-template <typename P, typename Style>
+template <typename P, typename Style,
+          std::enable_if_t<!has_plot_member<Style, void(Process<P>&)>::value, int> = 0>
 void plotStyle(Process<P>& process, const Style& style)
 {
-    // style.plot(process);
+    // Do nothing where no plot member exists for this Process<P>
 }
 
-template <typename Style,
-          std::enable_if_t<has_plot<Style, void(Process<Gnuplot>&)>::value, int> = 0>
-void plotStyle(Process<Gnuplot>& gnuplot, const Style& style)
+template <typename P, typename Style,
+          std::enable_if_t<has_plot_member<Style, void(Process<P>&)>::value, int> = 0>
+void plotStyle(Process<P>& process, const Style& style)
 {
-    style.plot(gnuplot);
+    style.plot(process);
 }
 
-template <typename Style,
-          std::enable_if_t<has_plot<Style, void(Process<Mpl>&)>::value, int> = 0>
-void plotStyle(Process<Mpl>& mpl, const Style& style)
-{
-    style.plot(mpl);
-}
 
 using PlotStyles = std::unordered_map<size_t, std::any>;
 // using PlotStyles = std::array<std::any, MAX_STYLES>;
@@ -96,7 +85,6 @@ public:
     template <typename T, typename... Ts,
               std::enable_if_t<is_style<T>::value &&
                                !has_supported_types<T>::value, int> = 0>
-              // std::enable_if_t<is_style<T>::value, int> = 0> // &&
     void processArgs(const T& style, const Ts&... args)
     {
         plotStyle(*process_, style);
