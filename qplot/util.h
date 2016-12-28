@@ -76,34 +76,40 @@ struct has_pass<T, typename TestNontype<T::pass>::type> {
 };
 
 
-// Tuple updater
+// Map updater
 
-template <typename T> struct chart_traits;
+template <typename T> struct plot_traits;
 
-template<class T, class Tuple, class ObjTypes, std::size_t N>
-struct TupleUpdater {
-    static void update(Tuple& chartStyles, const T& style)
+template<class T, class Map, class ObjTypes, std::size_t N>
+struct MapUpdater {
+    static void update(Map& plotStyles, const T& style)
     {
-		using Type = std::tuple_element_t<N-1, ObjTypes>;
-		std::get<chart_traits<Type>::index>(chartStyles) = style;
+		using Object = std::tuple_element_t<N-1, ObjTypes>;
+        using StyleVariant = typename plot_traits<Object>::type::supported_styles;
 
-        TupleUpdater<T, Tuple, ObjTypes, N-1>::update(chartStyles, style);
+        size_t key = plot_traits<Object>::type::id;
+        plotStyles[key] = StyleVariant{style};
+
+        MapUpdater<T, Map, ObjTypes, N-1>::update(plotStyles, style);
     }
 };
  
-template<class T, class Tuple, class ObjTypes>
-struct TupleUpdater<T, Tuple, ObjTypes, 1> {
-    static void update(Tuple& chartStyles, const T& style)
+template<class T, class Map, class ObjTypes>
+struct MapUpdater<T, Map, ObjTypes, 1> {
+    static void update(Map& plotStyles, const T& style)
     {
-		using Type = std::tuple_element_t<0, ObjTypes>;
-		std::get<chart_traits<Type>::index>(chartStyles) = style;
+		using Object = std::tuple_element_t<0, ObjTypes>;
+        using StyleVariant = typename plot_traits<Object>::type::supported_styles;
+
+        size_t key = plot_traits<Object>::type::id;
+        plotStyles[key] = StyleVariant{style};
     }
 };
 
 // Todo: can't we just have a base case for when N=0?
-template<class T, class Tuple, class ObjTypes>
-struct TupleUpdater<T, Tuple, ObjTypes, 0> {
-    static void update(Tuple& chartStyles, const T& style)
+template<class T, class Map, class ObjTypes>
+struct MapUpdater<T, Map, ObjTypes, 0> {
+    static void update(Map& plotStyles, const T& style)
     {
     }
 };

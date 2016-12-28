@@ -5,6 +5,7 @@
 #include <fstream>
 
 #include "qplot/qplot.h"
+#include "styles.h"
 
 using namespace std;
 

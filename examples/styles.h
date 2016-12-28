@@ -202,17 +202,17 @@ struct HeatMap
 	// void plotPost() const { gnuplot << "unset style heat map\n"; }
 };
 
-using MyStyles = std::tuple<std::variant<LineChart, BarChart, Candlestick>,
-                            std::variant<HeatMap>,
-                            std::variant<Candlestick>
-							>;
 
-template <typename T> struct chart_traits;
-template <> struct chart_traits<std::vector<int>>    { static constexpr size_t index = 0; };
-template <> struct chart_traits<std::vector<float>>  { static constexpr size_t index = 0; };
-template <> struct chart_traits<std::vector<Point2>> { static constexpr size_t index = 1; };
-template <> struct chart_traits<std::vector<CandlestickRow>> { static constexpr size_t index = 2; };
+// Previously used a tuple<> rather than a map<size_t,any>
+// However a tuple requires statically writing a tuple type with each variant's tuple index matching it's id
 
-// All vector<T>'s are index 0 (check)
-//template <typename T> struct chart_traits<std::vector<T>> { static constexpr index = 0 };
+struct Data1d          { static constexpr size_t id = 0; using supported_styles = std::variant<LineChart, BarChart>; };
+struct Data2dPoints    { static constexpr size_t id = 1; using supported_styles = std::variant<>; };  // PointChart
+struct WidgetData      { static constexpr size_t id = 2; using supported_styles = std::variant<Candlestick>; };
+struct ScalarFieldData { static constexpr size_t id = 3; using supported_styles = std::variant<HeatMap>; };
 
+template <typename T> struct plot_traits;
+template <> struct plot_traits<std::vector<CandlestickRow>> { using type = WidgetData; };
+template <> struct plot_traits<std::vector<int>>            { using type = Data1d; };
+template <> struct plot_traits<std::vector<float>>          { using type = Data1d; };
+template <> struct plot_traits<std::vector<Point2>>         { using type = Data2dPoints; };

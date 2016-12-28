@@ -3,6 +3,7 @@
 
 #include "qplot/qplot.h"
 
+#include "styles.h"
 #include "examples.h"
 
 using namespace std;
