@@ -69,15 +69,7 @@ public:
     template <typename... Ts>
 	Qplot(Ts&&... args) : process_(std::make_unique<Process<P>>())
     {
-        // Everything to cfout goes to our local ostringstream
-        auto cout_buffer = process_->cfout().rdbuf();
-        process_->cfout().rdbuf(header_.rdbuf());
-
-        // Capture in local header_ buffer
-        processArgs(args...);
-
-        // Swap back
-        process_->cfout().rdbuf(cout_buffer);
+        addToHeader(args...);
     }
 
     PlotStyles plotStyles_;
@@ -142,6 +134,20 @@ public:
         process_.reset();  // destory first
         process_ = std::make_unique<Process<P>>();
 	}
+
+    template <typename... Ts>
+    void addToHeader(const Ts&... args)
+    {
+        // Everything to cfout goes to our local ostringstream
+        auto cout_buffer = process_->cfout().rdbuf();
+        process_->cfout().rdbuf(header_.rdbuf());
+
+        // Capture in local header_ buffer
+        processArgs(args...);
+
+        // Swap back
+        process_->cfout().rdbuf(cout_buffer);
+    }
 
     // cf_ostream& cfout() { return *cfout_; }
     fd_ostream& fdout() { return process_->fdout(); }

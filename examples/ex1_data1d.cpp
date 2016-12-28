@@ -99,11 +99,12 @@ void example1()
 	// Watchit: style must but passed first since we no longer have the chartStyles tuple for default initialzation
 	// Watchit: todo MPL example wait issue - hard coded pipe fd's
 
-	// Qplot<Gnuplot> qplot1;
+	Qplot<Gnuplot> qplot1(LineChart{});
 	// qplot1.plot(ints, AxisExtents{{0,1}, {0,2}}, ImageSize{400,300}, ints);
     // qplot1.plot(ints, BarChart(), ints, ints, LineChart(), ints);
+    qplot1.plot(Filename("data1d"), ints);
+    qplot1.plot(Filename("data1d2"), ints);
     // qplot1.plot(Filename("data1d"), LineChart(), ints);
-
 
 	Qplot<Mpl> qplot2(Header{});
 	// qplot2.plot(ints, AxisExtents{{0,1}, {0,2}}, ImageSize{400,300}, ints);

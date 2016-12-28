@@ -15,8 +15,8 @@ int main()
 	test();
 
 	example1();
-	// example2();
-	// example3();
+	example2();
+	example3();
 
 	// gnuplotTesting();
 

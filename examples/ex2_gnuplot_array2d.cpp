@@ -66,10 +66,13 @@ void example2()
     	}
     }
 
-	Qplot<Gnuplot> qplot;
-    qplot.plot(Filename("grid1"), Colours(Colours::RAINBOW), HeatMap(), array);
-    qplot.plot(Filename("grid2"), NumberGrid(), array);
+	Qplot<Gnuplot> qplot(Colours{Colours::RAINBOW});
+    qplot.plot(Filename("grid1"), Colours{Colours::HOT}, HeatMap(), array);
+    qplot.plot(Filename("grid2"), HeatMap(), array);  // this will be rainbow
+
+    qplot.addToHeader(Colours{Colours::OCEAN});
+    qplot.plot(Filename("grid3"), HeatMap(), array);
+    qplot.plot(Filename("grid4"), HeatMap(), array);
 
     // qplot.plot(Filename("grid2"), HeatMap(), array, NumberGrid(), array);
 }
-
