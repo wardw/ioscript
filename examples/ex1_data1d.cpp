@@ -16,7 +16,7 @@ struct Header
 {
 	using supported_types = std::tuple<>;
 
-	void plot(Qplot<Mpl>& mpl) const {
+	void operator()(Qplot<Mpl>& mpl) const {
         mpl <<
 R"(
 import os
@@ -32,7 +32,7 @@ struct BarChart
 	using supported_types = std::tuple<std::vector<int>,std::vector<float>>;
 
 	template<typename T>
-	void plot(Qplot<Gnuplot>& gnuplot, const T& obj) const
+	void operator()(Qplot<Gnuplot>& gnuplot, const T& obj) const
 	{
         gnuplot << "plot '-' using 1:2\n";
         sendData(gnuplot, obj);
@@ -40,7 +40,7 @@ struct BarChart
 	}
 
 	template<typename T>
-	void plot(Qplot<Mpl>& mpl, const T& obj) const
+	void operator()(Qplot<Mpl>& mpl, const T& obj) const
 	{
 		mpl << "print \"(python) todo: plot BarChart with " + objName(obj) + "\"\n";
 	}
@@ -51,7 +51,7 @@ struct LineChart
 	using supported_types = std::tuple<std::vector<int>,std::vector<float>>;
 
 	// template<typename T>
-	// void plot(Qplot<Gnuplot>& qp, const T& obj) const
+	// void operator()(Qplot<Gnuplot>& qp, const T& obj) const
 	// {
  //        qp << "plot '-' using 1:2\n";
  //        sendData(qp, obj);
@@ -59,7 +59,7 @@ struct LineChart
 	// }
 
 	template<typename T>
-	void plot(Qplot<Gnuplot>& gnuplot, const T& obj) const
+	void operator()(Qplot<Gnuplot>& gnuplot, const T& obj) const
 	{
         gnuplot << "plot '-' using 1:2\n";
         sendData(gnuplot, obj);
@@ -67,7 +67,7 @@ struct LineChart
 	}
 
 	template<typename T>
-	void plot(Qplot<Mpl>& mpl, const T& obj) const
+	void operator()(Qplot<Mpl>& mpl, const T& obj) const
 	{
         mpl <<
 R"(

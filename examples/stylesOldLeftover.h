@@ -7,7 +7,7 @@ struct ImageSize
 {
 	using supported_types = std::tuple<>;
 
-	void plot(Qplot<Gnuplot>& gnuplot) const {
+	void operator()(Qplot<Gnuplot>& gnuplot) const {
 		gnuplot << "set image size " + std::to_string(x) + "," + std::to_string(y) + "\n";
 	}
 	int x = 800;
@@ -18,7 +18,7 @@ struct AxisExtents
 {
 	using supported_types = std::tuple<>;
 	
-	void plot(Qplot<Gnuplot>& gnuplot) const {
+	void operator()(Qplot<Gnuplot>& gnuplot) const {
 		gnuplot << "set axis extents\n";
 	}
 	int x[2] = {0,1};
@@ -32,7 +32,7 @@ struct ScatterChart
 	using supported_types = std::tuple<std::vector<Point2>>;
 
 	template<typename T>
-	void plot(Qplot<Gnuplot>& gnuplot, const T& obj) const {
+	void operator()(Qplot<Gnuplot>& gnuplot, const T& obj) const {
 		gnuplot << "plot ScatterChart with " + objName(obj) + "\n";
 	}
 };

@@ -8,7 +8,7 @@ struct Filename
 
 	Filename(const std::string& filename) : filename(filename) {}
 
-	void plot(Qplot<Gnuplot>& gnuplot) const
+	void operator()(Qplot<Gnuplot>& gnuplot) const
 	{
         gnuplot << "set output '" << filename << ".png'\n"
                 << "set terminal pngcairo size 500, 500\n";
@@ -27,7 +27,7 @@ struct Colours
 	Colours(Palette palette) : palette_(palette) {}
 	using supported_types = std::tuple<>;
 
-	void plot(Qplot<Gnuplot>& gnuplot) const {
+	void operator()(Qplot<Gnuplot>& gnuplot) const {
 		switch (palette_)
 		{
 			case OCEAN:    gnuplot << "set palette rgbformulae 23,28,3 \n";  break;

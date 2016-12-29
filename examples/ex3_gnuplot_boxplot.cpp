@@ -16,7 +16,7 @@ struct BoxPlot
 	using supported_types = std::tuple<std::vector<BoxPlotRow>>;  // todo: something like Colums<3>
 
 	template<typename T>
-	void plot(Qplot<Gnuplot>& gnuplot, const T& obj) const
+	void operator()(Qplot<Gnuplot>& gnuplot, const T& obj) const
 	{
 		gnuplot <<
 R"(

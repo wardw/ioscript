@@ -22,7 +22,7 @@ template <typename P>
 class Qplot;
 
 template <typename P, typename Style, typename T,
-          std::enable_if_t<!has_plot_member<Style, void(Qplot<P>&,const T&)>::value, int> = 0>
+          std::enable_if_t<!is_plottable<Style, void(Qplot<P>&,const T&)>::value, int> = 0>
 void plotObject(Qplot<P>& process, const Style& style, const T& obj)
 {
     // Do nothing where no plot member exists for this Process<P>
@@ -30,26 +30,26 @@ void plotObject(Qplot<P>& process, const Style& style, const T& obj)
 
 // Note that this will be instantiated for all style variants associated with the obj type (regardless of the actual obj type)
 template <typename P, typename Style, typename T,
-          std::enable_if_t<has_plot_member<Style, void(Qplot<P>&,const T&)>::value, int> = 0>
+          std::enable_if_t<is_plottable<Style, void(Qplot<P>&,const T&)>::value, int> = 0>
 void plotObject(Qplot<P>& process, const Style& style, const T& obj)
 {
-    style.plot(process, obj);
+    style(process, obj);
 }
 
 // Plotting styles with no associated object
 
 template <typename P, typename Style,
-          std::enable_if_t<!has_plot_member<Style, void(Qplot<P>&)>::value, int> = 0>
+          std::enable_if_t<!is_plottable<Style, void(Qplot<P>&)>::value, int> = 0>
 void plotStyle(Qplot<P>& process, const Style& style)
 {
     // Do nothing where no plot member exists for this Process<P>
 }
 
 template <typename P, typename Style,
-          std::enable_if_t<has_plot_member<Style, void(Qplot<P>&)>::value, int> = 0>
+          std::enable_if_t<is_plottable<Style, void(Qplot<P>&)>::value, int> = 0>
 void plotStyle(Qplot<P>& process, const Style& style)
 {
-    style.plot(process);
+    style(process);
 }
 
 

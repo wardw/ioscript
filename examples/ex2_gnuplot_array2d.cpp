@@ -15,7 +15,7 @@ struct HeatMap
 	using supported_types = std::tuple<Array2d>;
 
 	template<typename T>
-	void plot(Qplot<Gnuplot>& gnuplot, const T& obj) const
+	void operator()(Qplot<Gnuplot>& gnuplot, const T& obj) const
 	{
     	gnuplot <<  "plot '-' using 1:2:3 with image\n";
 
@@ -35,7 +35,7 @@ struct NumberGrid
 	using supported_types = std::tuple<Array2d>;
 
 	template<typename T>
-	void plot(Qplot<Gnuplot>& gnuplot, const T& obj) const
+	void operator()(Qplot<Gnuplot>& gnuplot, const T& obj) const
 	{
     	gnuplot <<  "plot '-' using 1:2:($3 == 0 ? \"\" : sprintf(\"%4.2f\",$3) ) with labels font \"PTMono,8\"\n";
     	// gnuplot <<  ", '-' using 1:2:($3 == 0 ? \"\" : sprintf(\"%4.2f\",$3) ) with labels font \"PTMono,8\"\n";
