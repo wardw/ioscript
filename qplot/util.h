@@ -72,7 +72,7 @@ struct has_supported_types<T, typename std::enable_if<std::tuple_size<typename T
 
 
 template<int N>
-struct TestNontype {
+struct CheckNontype {
     using type = void;
 };
 
@@ -81,9 +81,9 @@ struct has_pass {
     static constexpr bool value = false;
 };
 
-// The idea is that if TestNontype<T> is a valid substitution (and so T exists), this template is enabled
+// The idea is that if CheckNontype<T> is a valid substitution (and so T exists), this template is enabled
 template<class T>
-struct has_pass<T, typename TestNontype<T::pass>::type> {
+struct has_pass<T, typename CheckNontype<T::pass>::type> {
     static constexpr bool value = true;
 };
 
@@ -166,7 +166,7 @@ void writeStyleString(Process<P>& gnuplot, const T& styleString)
 // Adapted from http://stackoverflow.com/a/16824239/254035
 
 template<typename, typename T>
-struct is_plottable {
+struct has_member_function {
     static_assert(std::integral_constant<T,false>::value,
                   "Second template parameter needs to be of function type.");
 };
@@ -174,7 +174,7 @@ struct is_plottable {
 // specialization that does the checking
 
 template<typename C, typename Ret, typename... Args>
-struct is_plottable<C, Ret(Args...)> {
+struct has_member_function<C, Ret(Args...)> {
 private:
     template<typename T>
     static constexpr auto check(T*) -> typename std::is_same<
@@ -187,4 +187,29 @@ private:
 
 public:
     static constexpr bool value = type::value;
+};
+
+
+template <typename P>
+class Qplot;
+
+template <typename T, typename P, typename U = void>
+struct is_canvas_style {
+    static constexpr bool value = false;
+};
+
+template <typename T, typename P>
+struct is_canvas_style<T, P, std::enable_if_t<has_member_function<T, void(Qplot<P>&)>::value>> {
+    static constexpr bool value = true;
+};
+
+
+template <typename T, typename P, typename U = void>
+struct is_object_style {
+    static constexpr bool value = false;
+};
+
+template <typename T, typename P>
+struct is_object_style<T, P, std::enable_if_t<has_member_function<T, void(Qplot<P>&,const T&)>::value>> {
+    static constexpr bool value = true;
 };

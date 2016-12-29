@@ -22,7 +22,7 @@ template <typename P>
 class Qplot;
 
 template <typename P, typename Style, typename T,
-          std::enable_if_t<!is_plottable<Style, void(Qplot<P>&,const T&)>::value, int> = 0>
+          std::enable_if_t<!is_object_style<Style,P>::value, int> = 0>
 void plotObject(Qplot<P>& process, const Style& style, const T& obj)
 {
     // Do nothing where no plot member exists for this Process<P>
@@ -30,7 +30,7 @@ void plotObject(Qplot<P>& process, const Style& style, const T& obj)
 
 // Note that this will be instantiated for all style variants associated with the obj type (regardless of the actual obj type)
 template <typename P, typename Style, typename T,
-          std::enable_if_t<is_plottable<Style, void(Qplot<P>&,const T&)>::value, int> = 0>
+          std::enable_if_t<is_object_style<Style,P>::value, int> = 0>
 void plotObject(Qplot<P>& process, const Style& style, const T& obj)
 {
     style(process, obj);
@@ -39,14 +39,14 @@ void plotObject(Qplot<P>& process, const Style& style, const T& obj)
 // Plotting styles with no associated object
 
 template <typename P, typename Style,
-          std::enable_if_t<!is_plottable<Style, void(Qplot<P>&)>::value, int> = 0>
+          std::enable_if_t<!is_canvas_style<Style,P>::value, int> = 0>
 void plotStyle(Qplot<P>& process, const Style& style)
 {
     // Do nothing where no plot member exists for this Process<P>
 }
 
 template <typename P, typename Style,
-          std::enable_if_t<is_plottable<Style, void(Qplot<P>&)>::value, int> = 0>
+          std::enable_if_t<is_canvas_style<Style,P>::value, int> = 0>
 void plotStyle(Qplot<P>& process, const Style& style)
 {
     style(process);
@@ -76,7 +76,7 @@ public:
 
     void processArgs() {}
 
-	// Arg is style (for an object)
+	// Arg is an object-style
     template <typename T, typename... Ts,
               std::enable_if_t<is_style<T>::value &&
                                has_supported_types<T>::value, int> = 0>
@@ -90,7 +90,7 @@ public:
 		processArgs(args...);
     }
 
-	// Arg is a style (for the canvas)
+	// Arg is a canvas-style
     template <typename T, typename... Ts,
               std::enable_if_t<is_style<T>::value &&
                                !has_supported_types<T>::value, int> = 0>
@@ -101,7 +101,7 @@ public:
 		processArgs(args...);
     }
 
-	// Arg is an object to plot
+    // Arg is an object to plot
     template <typename T, typename... Ts,
               std::enable_if_t<!is_style<T>::value, int> = 0>
     void processArgs(const T& obj, const Ts&... args)
@@ -112,8 +112,8 @@ public:
 		auto styleVar = std::any_cast<StyleVariant>(plotStyles_[key]);
 
 		// Plot this object
-		std::visit([this,&obj](auto&& arg) {
-			plotObject(*this, arg, obj);
+		std::visit([this,&obj](auto&& style) {
+			plotObject(*this, style, obj);
 		}, styleVar);
 
 		processArgs(args...);
