@@ -10,49 +10,6 @@
 #include "process.h"
 #include "util.h"
 
-// todo
-// #include "examples/styles.h"
-
-// These non-members are called for every object to plot, along with the it's currently associated style
-// Overload to completely govern how this type is plotted
-
-// Plotting styles associated to objects
-
-template <typename P>
-class Qplot;
-
-template <typename P, typename Style, typename T,
-          std::enable_if_t<!is_object_style<Style,P>::value, int> = 0>
-void plotObject(Qplot<P>& process, const Style& style, const T& obj)
-{
-    // Do nothing where no plot member exists for this Process<P>
-}
-
-// Note that this will be instantiated for all style variants associated with the obj type (regardless of the actual obj type)
-template <typename P, typename Style, typename T,
-          std::enable_if_t<is_object_style<Style,P>::value, int> = 0>
-void plotObject(Qplot<P>& process, const Style& style, const T& obj)
-{
-    style(process, obj);
-}
-
-// Plotting styles with no associated object
-
-template <typename P, typename Style,
-          std::enable_if_t<!is_canvas_style<Style,P>::value, int> = 0>
-void plotStyle(Qplot<P>& process, const Style& style)
-{
-    // Do nothing where no plot member exists for this Process<P>
-}
-
-template <typename P, typename Style,
-          std::enable_if_t<is_canvas_style<Style,P>::value, int> = 0>
-void plotStyle(Qplot<P>& process, const Style& style)
-{
-    style(process);
-}
-
-
 using PlotStyles = std::unordered_map<size_t, std::any>;
 // using PlotStyles = std::array<std::any, MAX_STYLES>;
 
@@ -78,8 +35,7 @@ public:
 
 	// Arg is an object-style
     template <typename T, typename... Ts,
-              std::enable_if_t<is_style<T>::value &&
-                               has_supported_types<T>::value, int> = 0>
+              std::enable_if_t<is_object_style<T,P>::value, int> = 0>
     void processArgs(const T& style, const Ts&... args)
     {
 		// Nothing to plot now, but update our plotStyles_ with this style where variants that support it
@@ -92,18 +48,19 @@ public:
 
 	// Arg is a canvas-style
     template <typename T, typename... Ts,
-              std::enable_if_t<is_style<T>::value &&
-                               !has_supported_types<T>::value, int> = 0>
+              std::enable_if_t<is_canvas_style<T,P>::value, int> = 0>
     void processArgs(const T& style, const Ts&... args)
     {
-        plotStyle(*this, style);
+        // plotStyle(*this, style);
+        style(*this);
 
 		processArgs(args...);
     }
 
     // Arg is an object to plot
     template <typename T, typename... Ts,
-              std::enable_if_t<!is_style<T>::value, int> = 0>
+              std::enable_if_t<!is_object_style<T,P>::value &&
+                               !is_canvas_style<T,P>::value, int> = 0>
     void processArgs(const T& obj, const Ts&... args)
     {
 		// Get the style variant that's currently associated with the arg type T
@@ -113,7 +70,8 @@ public:
 
 		// Plot this object
 		std::visit([this,&obj](auto&& style) {
-			plotObject(*this, style, obj);
+			// plotObject(*this, style, obj);
+            style(*this, obj);
 		}, styleVar);
 
 		processArgs(args...);
@@ -170,3 +128,42 @@ public:
 //     static Qplot qp;
 //     qp.plot(args...);
 // }
+
+
+/*
+// These non-members provide another level of indirection to enable completely overloading how an object+style is plotted
+// Currently disabled as unused, but left here as a future possibility
+
+template <typename P>
+class Qplot;
+
+template <typename P, typename Style, typename T,
+          std::enable_if_t<!is_object_style<Style,P>::value, int> = 0>
+void plotObject(Qplot<P>& process, const Style& style, const T& obj)
+{
+    // Do nothing where no plot member exists for this Process<P>
+}
+
+// Note that this will be instantiated for all style variants associated with the obj type (regardless of the actual obj type)
+template <typename P, typename Style, typename T,
+          std::enable_if_t<is_object_style<Style,P>::value, int> = 0>
+void plotObject(Qplot<P>& process, const Style& style, const T& obj)
+{
+    style(process, obj);
+}
+
+
+template <typename P, typename Style,
+          std::enable_if_t<!is_canvas_style<Style,P>::value, int> = 0>
+void plotStyle(Qplot<P>& process, const Style& style)
+{
+    // Do nothing where no plot member exists for this Process<P>
+}
+
+template <typename P, typename Style,
+          std::enable_if_t<is_canvas_style<Style,P>::value, int> = 0>
+void plotStyle(Qplot<P>& process, const Style& style)
+{
+    style(process);
+}
+*/

@@ -14,8 +14,6 @@ void sendData(Qplot<Gnuplot>& gnuplot, const std::vector<T>& obj)
 
 struct Header
 {
-	using supported_types = std::tuple<>;
-
 	void operator()(Qplot<Mpl>& mpl) const {
         mpl <<
 R"(
@@ -49,14 +47,6 @@ struct BarChart
 struct LineChart
 {
 	using supported_types = std::tuple<std::vector<int>,std::vector<float>>;
-
-	// template<typename T>
-	// void operator()(Qplot<Gnuplot>& qp, const T& obj) const
-	// {
- //        qp << "plot '-' using 1:2\n";
- //        sendData(qp, obj);
- //        qp << "e\n";
-	// }
 
 	template<typename T>
 	void operator()(Qplot<Gnuplot>& gnuplot, const T& obj) const
