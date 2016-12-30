@@ -116,7 +116,7 @@ template <> struct associated_styles<std::vector<int>>   { using type = Data1d; 
 template <> struct associated_styles<std::map<int,int>>  { using type = Data1d; };
 
 
-void example1_python()
+void example_python()
 {
 	std::default_random_engine gen;
 

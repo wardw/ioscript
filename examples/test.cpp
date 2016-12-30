@@ -41,11 +41,6 @@ struct CanvasStyle2 {
 	void operator()(Qplot<Gnuplot>& gnuplot) const {}
 };
 
-struct ObjectStyle2 {
-	template<typename T>
-	void operator()(Qplot<Gnuplot>& gnuplot, const T& obj) const {}
-};
-
 
 void test()
 {
@@ -58,8 +53,5 @@ void test()
 	assert( !has_supported_types<DataObject>::value );
 
 	cout << "is_canvas_style: " << is_canvas_style<CanvasStyle2,Gnuplot>::value << endl;
-	cout << "is_canvas_style: " << is_canvas_style<ObjectStyle2,Gnuplot>::value << endl;
-
 	cout << "is_object_style: " << is_object_style<CanvasStyle2,Gnuplot>::value << endl;
-	cout << "is_object_style: " << is_object_style<ObjectStyle2,Gnuplot>::value << endl;
 }
