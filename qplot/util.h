@@ -204,12 +204,15 @@ struct is_canvas_style<T, P, std::enable_if_t<has_member_function<T, void(Qplot<
 };
 
 
-template <typename T, typename P, typename U = void>
-struct is_object_style {
-    static constexpr bool value = false;
-};
+// template <typename T, typename P, typename U = void>
+// struct is_object_style {
+//     static constexpr bool value = false;
+// };
+
+// template <typename T, typename P>
+// struct is_object_style<T, P, std::enable_if_t<has_member_function<T, void(Qplot<P>&,const T&)>::value>> {
+//     static constexpr bool value = true;
+// };
 
 template <typename T, typename P>
-struct is_object_style<T, P, std::enable_if_t<has_member_function<T, void(Qplot<P>&,const T&)>::value>> {
-    static constexpr bool value = true;
-};
+using is_object_style = has_supported_types<T>;
