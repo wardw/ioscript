@@ -14,12 +14,12 @@ void sendData(Qplot<Gnuplot>& gnuplot, const std::vector<T>& obj)
 
 struct Header
 {
-	void operator()(Qplot<Mpl>& mpl) const {
-        mpl <<
+	void operator()(Qplot<Python>& python) const {
+        python <<
 R"(
 import os
-os.close( )" << mpl.fd_w() << R"( )
-fo = os.fdopen( )" << mpl.fd_r() << R"(, 'r')
+os.close( )" << python.fd_w() << R"( )
+fo = os.fdopen( )" << python.fd_r() << R"(, 'r')
 )"
 		<< "\n";
 	}
@@ -38,9 +38,9 @@ struct BarChart
 	}
 
 	template<typename T>
-	void operator()(Qplot<Mpl>& mpl, const T& obj) const
+	void operator()(Qplot<Python>& python, const T& obj) const
 	{
-		mpl << "print \"(python) todo: plot BarChart with " + objName(obj) + "\"\n";
+		python << "print \"(python) todo: plot BarChart with " + objName(obj) + "\"\n";
 	}
 };
 
@@ -57,9 +57,9 @@ struct LineChart
 	}
 
 	template<typename T>
-	void operator()(Qplot<Mpl>& mpl, const T& obj) const
+	void operator()(Qplot<Python>& python, const T& obj) const
 	{
-        mpl <<
+        python <<
 R"(
 for line in fo:
 	if line == 'EOT\n':
@@ -70,16 +70,16 @@ print "(Python) Done"
 
 		for (auto elem : obj)
 		{
-			mpl.fdout() << elem << '\n';
+			python.fdout() << elem << '\n';
 		}
-		mpl.fdout() << "EOT" << '\n';
+		python.fdout() << "EOT" << '\n';
 	}
 };
 
 struct Data1d { static constexpr size_t id = 0; using supported_styles = std::variant<LineChart, BarChart>; };
 
-template <> struct plot_traits<std::vector<int>>   { using type = Data1d; };
-template <> struct plot_traits<std::vector<float>> { using type = Data1d; };
+template <> struct associated_styles<std::vector<int>>   { using type = Data1d; };
+template <> struct associated_styles<std::vector<float>> { using type = Data1d; };
 
 
 void example1()
@@ -96,7 +96,7 @@ void example1()
     qplot1.plot(Filename("data1d2"), ints);
     // qplot1.plot(Filename("data1d"), LineChart(), ints);
 
-	Qplot<Mpl> qplot2(Header{});
+	Qplot<Python> qplot2(Header{});
 	// qplot2.plot(ints, AxisExtents{{0,1}, {0,2}}, ImageSize{400,300}, ints);
     // qplot2.plot(ints, ints, ints, LineChart(), ints);
     qplot2.plot(LineChart(), ints);

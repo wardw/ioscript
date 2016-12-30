@@ -49,4 +49,4 @@ struct Data2dPoints    { static constexpr size_t id = 1; using supported_styles 
 // Define a mapping from the client's object types to the type of plot data it represents
 
 
-template <> struct plot_traits<std::vector<Point2>>         { using type = Data2dPoints; };
+template <> struct associated_styles<std::vector<Point2>>         { using type = Data2dPoints; };

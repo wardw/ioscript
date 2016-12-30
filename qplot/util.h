@@ -90,16 +90,16 @@ struct has_pass<T, typename CheckNontype<T::pass>::type> {
 
 // Map updater
 
-template <typename T> struct plot_traits;
+template <typename T> struct associated_styles;
 
 template<class T, class Map, class ObjTypes, std::size_t N>
 struct MapUpdater {
     static void update(Map& plotStyles, const T& style)
     {
 		using Object = std::tuple_element_t<N-1, ObjTypes>;
-        using StyleVariant = typename plot_traits<Object>::type::supported_styles;
+        using StyleVariant = typename associated_styles<Object>::type::supported_styles;
 
-        size_t key = plot_traits<Object>::type::id;
+        size_t key = associated_styles<Object>::type::id;
         plotStyles[key] = StyleVariant{style};
 
         MapUpdater<T, Map, ObjTypes, N-1>::update(plotStyles, style);
@@ -111,9 +111,9 @@ struct MapUpdater<T, Map, ObjTypes, 1> {
     static void update(Map& plotStyles, const T& style)
     {
 		using Object = std::tuple_element_t<0, ObjTypes>;
-        using StyleVariant = typename plot_traits<Object>::type::supported_styles;
+        using StyleVariant = typename associated_styles<Object>::type::supported_styles;
 
-        size_t key = plot_traits<Object>::type::id;
+        size_t key = associated_styles<Object>::type::id;
         plotStyles[key] = StyleVariant{style};
     }
 };

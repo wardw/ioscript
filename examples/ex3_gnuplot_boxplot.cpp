@@ -73,7 +73,7 @@ plot '-' using (1):2, '' using (2):(5*$3)
 
 struct WidgetData  { static constexpr size_t id = 0; using supported_styles = std::variant<BoxPlot>; };
 
-template <> struct plot_traits<std::vector<BoxPlotRow>> { using type = WidgetData; };
+template <> struct associated_styles<std::vector<BoxPlotRow>> { using type = WidgetData; };
 
 
 void example3()

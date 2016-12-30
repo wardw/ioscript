@@ -53,7 +53,7 @@ struct NumberGrid
 
 struct Scalar2d { static constexpr size_t id = 0; using supported_styles = std::variant<HeatMap, NumberGrid>; };
 
-template <> struct plot_traits<Array2d> { using type = Scalar2d; };
+template <> struct associated_styles<Array2d> { using type = Scalar2d; };
 
 void example2()
 {

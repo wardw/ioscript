@@ -14,7 +14,7 @@ using PlotStyles = std::unordered_map<size_t, std::any>;
 // using PlotStyles = std::array<std::any, MAX_STYLES>;
 
 // Specializations in client code
-template <typename T> struct plot_traits;
+template <typename T> struct associated_styles;
 
 template <typename P>
 class Qplot
@@ -64,8 +64,8 @@ public:
     void processArgs(const T& obj, const Ts&... args)
     {
 		// Get the style variant that's currently associated with the arg type T
-        size_t key = plot_traits<T>::type::id;
-        using StyleVariant = typename plot_traits<T>::type::supported_styles;
+        size_t key = associated_styles<T>::type::id;
+        using StyleVariant = typename associated_styles<T>::type::supported_styles;
 		auto styleVar = std::any_cast<StyleVariant>(plotStyles_[key]);
 
 		// Plot this object
