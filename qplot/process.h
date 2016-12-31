@@ -91,18 +91,18 @@ class Process
 {
 public:
     Process() {
-        // First open a new pipe
+        // Open a new pipe
         if (pipe(filedes_) == -1) {
             std::cout << "pipe() returned with error" << std::endl;
         }
 
-        // Then fork process
+        // Fork process
         if (!(file_ = popen(T::cmd, "w"))) {
             std::cout << "popen returned with error" << std::endl;
             assert(false);  // todo
         }
 
-        // Closed unused read end of the pipe on this process
+        // Close unused read end on this process
         if (close(filedes_[0]) == -1)
             std::cout << "error closing filedes[0]" << std::endl;
 
@@ -112,11 +112,11 @@ public:
         std::cout << "Pipe opened with read end " << filedes_[0] << " and write end " << filedes_[1] << std::endl;
     }
     ~Process() {
-        // close data pipe
+        // Close 'data' pipe
         if (close(filedes_[1]) == -1)
             std::cout << "close(filedes_[1]) returned with error" << std::endl;
 
-        // close process
+        // Close process
         pclose(file_);
     }
 
