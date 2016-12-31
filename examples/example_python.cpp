@@ -66,9 +66,15 @@ import matplotlib.pyplot as plt
 x = map(int, fo.readline().split())
 y = map(int, fo.readline().split())
 
+if 'numPlots' not in locals():
+	numPlots = 1
+	plotNum = 1
 width = 1.0/numPlots
 xPos = plotNum * width
+
+assert numPlots < 7, "No! If only because we've only enumerated 7 colours"
 cols = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
+
 plt.bar([a+xPos for a in x], y, width-0.1, color=cols[plotNum])
 plotNum += 1
 )" << "\n";
@@ -90,6 +96,7 @@ import matplotlib.pyplot as plt
 
 x = map(int, fo.readline().split())
 y = map(int, fo.readline().split())
+
 plt.plot(x, y, 'o-')
 plt.plot(x, y, 'o-')
 )" << "\n";
