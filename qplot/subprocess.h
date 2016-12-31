@@ -87,10 +87,10 @@ struct Python     { static constexpr const char* cmd = "python"; };
 // struct Python     { static constexpr const char* cmd = "cat"; };
 
 template <typename T>
-class Process
+class Subprocess
 {
 public:
-    Process() {
+    Subprocess() {
         // Open a new pipe
         if (pipe(filedes_) == -1) {
             std::cout << "pipe() returned with error" << std::endl;
@@ -111,7 +111,7 @@ public:
 
         std::cout << "Pipe opened with read end " << filedes_[0] << " and write end " << filedes_[1] << std::endl;
     }
-    ~Process() {
+    ~Subprocess() {
         // Close 'data' pipe
         if (close(filedes_[1]) == -1)
             std::cout << "close(filedes_[1]) returned with error" << std::endl;
@@ -121,13 +121,13 @@ public:
     }
 
     template <typename U>
-    friend Process& operator<<(Process& process, const U& obj) {
+    friend Subprocess& operator<<(Subprocess& process, const U& obj) {
         *process.cfout_ << obj;
         return process;
     }
 
-    Process(const Process&) = delete;
-    Process& operator=(const Process&) = delete;
+    Subprocess(const Subprocess&) = delete;
+    Subprocess& operator=(const Subprocess&) = delete;
 
     cf_ostream& cfout() { return *cfout_; }
     fd_ostream& fdout() { return *fdout_; }

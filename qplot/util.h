@@ -130,11 +130,11 @@ struct MapUpdater<T, Map, ObjTypes, 0> {
 // http://en.cppreference.com/w/cpp/utility/tuple/tuple
 
 template <typename P>
-class Process;
+class Subprocess;
 
 template<class P, class Tuple, std::size_t N>
 struct TuplePrinter {
-    static void writeStyleString(Process<P>& gnuplot, const Tuple& t)
+    static void writeStyleString(Subprocess<P>& gnuplot, const Tuple& t)
     {
         TuplePrinter<P, Tuple, N-1>::writeStyleString(gnuplot, t);
         gnuplot << std::get<N-1>(t).c_str();
@@ -143,20 +143,20 @@ struct TuplePrinter {
  
 template<class P, class Tuple>
 struct TuplePrinter<P, Tuple, 1>{
-    static void writeStyleString(Process<P>& gnuplot, const Tuple& t)
+    static void writeStyleString(Subprocess<P>& gnuplot, const Tuple& t)
     {
         gnuplot << std::get<0>(t).c_str();
     }
 };
  
 template<class P, class... Args>
-void writeStyleString(Process<P>& gnuplot, const std::tuple<Args...>& t)
+void writeStyleString(Subprocess<P>& gnuplot, const std::tuple<Args...>& t)
 {
     TuplePrinter<P, decltype(t), sizeof...(Args)>::writeStyleString(gnuplot, t);
 }
 
 template<class P, class T>
-void writeStyleString(Process<P>& gnuplot, const T& styleString)
+void writeStyleString(Subprocess<P>& gnuplot, const T& styleString)
 {
     gnuplot << styleString.c_str();
 }

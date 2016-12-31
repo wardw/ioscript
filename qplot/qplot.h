@@ -7,7 +7,7 @@
 #include <any>
 #include <ostream>
 
-#include "process.h"
+#include "subprocess.h"
 #include "util.h"
 
 using PlotStyles = std::unordered_map<size_t, std::any>;
@@ -19,12 +19,12 @@ template <typename T> struct associated_styles;
 template <typename P>
 class Qplot
 {
-    std::unique_ptr<Process<P>> process_ = nullptr;
+    std::unique_ptr<Subprocess<P>> process_ = nullptr;
     std::ostringstream header_;
 
 public:
     template <typename... Ts>
-	Qplot(Ts&&... args) : process_(std::make_unique<Process<P>>())
+	Qplot(Ts&&... args) : process_(std::make_unique<Subprocess<P>>())
     {
         addToHeader(args...);
     }
@@ -80,7 +80,7 @@ public:
     template <typename... Ts>
 	void plot(const Ts&... args)
 	{
-        // Process header
+        // Subprocess header
         *this << header_.str();
 
         // Recuse into arguments
@@ -90,7 +90,7 @@ public:
         // + This ends out code stream to the process, which e.g. for python alows the process to start executin
         // + Also important that each call to plot (aside from the intentional header) is stateless
         process_.reset();  // destory first
-        process_ = std::make_unique<Process<P>>();
+        process_ = std::make_unique<Subprocess<P>>();
 	}
 
     template <typename... Ts>
@@ -141,7 +141,7 @@ template <typename P, typename Style, typename T,
           std::enable_if_t<!is_object_style<Style,P>::value, int> = 0>
 void plotObject(Qplot<P>& process, const Style& style, const T& obj)
 {
-    // Do nothing where no plot member exists for this Process<P>
+    // Do nothing where no plot member exists for this Subprocess<P>
 }
 
 // Note that this will be instantiated for all style variants associated with the obj type (regardless of the actual obj type)
@@ -157,7 +157,7 @@ template <typename P, typename Style,
           std::enable_if_t<!is_canvas_style<Style,P>::value, int> = 0>
 void plotStyle(Qplot<P>& process, const Style& style)
 {
-    // Do nothing where no plot member exists for this Process<P>
+    // Do nothing where no plot member exists for this Subprocess<P>
 }
 
 template <typename P, typename Style,

@@ -8,7 +8,7 @@ struct Ruby { static constexpr const char* cmd = "ruby"; };
 
 void example1()
 {
-	Process<Ruby> ruby;
+	Subprocess<Ruby> ruby;
 
 	ruby << "puts 'Hello, world!'" << '\n';
 
@@ -30,7 +30,7 @@ io.each_line {|line| puts "vals: #{line.split().map { |s| s.to_i }}" }
 
 void example2()
 {
-	Process<Python> python;
+	Subprocess<Python> python;
 
 	python << "print \"Hello, world!\"" << '\n';
 
