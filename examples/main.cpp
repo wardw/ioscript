@@ -5,14 +5,14 @@
 
 using namespace std;
 
-void test();
+void testing();
 void example_python();
 void example_gnuplot();
 void example_process();
 
 int main()
 {
-	test();
+	testing();
 
 	// example_python();
 	// example_gnuplot();

@@ -1,11 +1,12 @@
 #pragma once
 
+#include <ostream>
+#include <sstream>
 #include <unordered_map>
 #include <tuple>
 #include <type_traits>
 #include <variant>
 #include <any>
-#include <ostream>
 
 #include "subprocess.h"
 #include "util.h"
@@ -35,7 +36,7 @@ public:
 
 	// Arg is an object-style
     template <typename T, typename... Ts,
-              std::enable_if_t<is_object_style<T,P>::value, int> = 0>
+              std::enable_if_t<is_object_style<T>::value, int> = 0>
     void processArgs(const T& style, const Ts&... args)
     {
 		// Nothing to plot now, but update our plotStyles_ with this style where variants that support it
@@ -59,7 +60,7 @@ public:
 
     // Arg is an object to plot
     template <typename T, typename... Ts,
-              std::enable_if_t<!is_object_style<T,P>::value &&
+              std::enable_if_t<!is_object_style<T>::value &&
                                !is_canvas_style<T,P>::value, int> = 0>
     void processArgs(const T& obj, const Ts&... args)
     {
