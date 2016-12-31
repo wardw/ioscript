@@ -1,6 +1,64 @@
 #pragma once
 
+#include <variant>
 #include <cxxabi.h>
+
+
+template <typename T>
+std::string objName(const T& obj)
+{
+    std::ostringstream os;
+    int info;
+    os << abi::__cxa_demangle(typeid(obj).name(),0,0,&info);
+    return os.str();
+}
+
+
+// Find wether a variant contains a given type
+
+// Returns the index if the variant contains the type, or -1 otherwise
+// Adapted from http://stackoverflow.com/a/25958302/254035
+
+// The general template is undefined, we're only intereted in the specializations below
+template <typename T, size_t N, typename Variant>
+struct has_type;
+
+// We've exhausted searching all variant elements - not found
+template <typename T, size_t N>
+struct has_type<T, N, std::variant<>> : std::integral_constant<int,-1> {};
+
+// A match: T matches the first T of the variant, now at position N
+template <typename T, size_t N, typename... Ts>
+struct has_type<T, N, std::variant<T, Ts...>> : std::integral_constant<int,N> {};
+
+// No match: U is not T
+template <typename T, size_t N, typename U, typename... Ts>
+struct has_type<T, N, std::variant<U, Ts...>> : has_type<T, N+1, std::variant<Ts...>> {};
+
+template <typename T, typename Variant>
+using variant_contains_type = typename has_type<T, 0, Variant>::type;
+
+
+// Todo: meta up with above
+
+template <typename T, size_t N, typename Tuple>
+struct has_type;
+
+// We've exhausted searching all tuple elements - not found
+template <typename T, size_t N>
+struct has_type<T, N, std::tuple<>> : std::integral_constant<int,-1> {};
+
+// A match: T matches the first T of the tuple, now at position N
+template <typename T, size_t N, typename... Ts>
+struct has_type<T, N, std::tuple<T, Ts...>> : std::integral_constant<int,N> {};
+
+// No match: U is not T
+template <typename T, size_t N, typename U, typename... Ts>
+struct has_type<T, N, std::tuple<U, Ts...>> : has_type<T, N+1, std::tuple<Ts...>> {};
+
+template <typename T, typename Tuple>
+using tuple_contains_type = typename has_type<T, 0, Tuple>::type;
+
 
 // Map updater
 
@@ -42,13 +100,64 @@ struct MapUpdater<T, Map, ObjTypes, 0> {
 
 
 template <typename T>
-std::string objName(const T& obj)
+struct is_variant : std::false_type {};
+
+template <typename T, typename... Ts>
+struct is_variant<std::variant<T,Ts...>>  : std::true_type {};
+
+static_assert(  is_variant<std::variant<int,float>>::value );
+static_assert( !is_variant<nullptr_t>::value );
+
+template <typename StyleVariant, typename Style, int key>
+void updateTuple(StyleVariant& styleVariant, const Style& style, std::integral_constant<int,key>)
 {
-    std::ostringstream os;
-    int info;
-    os << abi::__cxa_demangle(typeid(obj).name(),0,0,&info);
-    return os.str();
+    styleVariant = style;
 }
+
+template <typename StyleVariant, typename Style>
+void updateTuple(StyleVariant& styleVariant, const Style& style, std::integral_constant<int,-1>)
+{
+    std::cout << "The styles variant " << objName(styleVariant) << " does not contain the style " << objName(style) << std::endl;
+}
+
+template<class Style, class Tuple, std::size_t N>
+struct TupleUpdater {
+    static void update(Tuple& plotStyles, const Style& style)
+    {
+        using StyleVariant = std::tuple_element_t<N-1, Tuple>;
+
+        static_assert(is_variant<StyleVariant>::value, "The Styles template parameter in Qplot<Styles> must be a tuple containing only std::variants");
+        using Result = variant_contains_type<Style, StyleVariant>;
+
+        auto& styleVariant = std::get<N-1>(plotStyles);
+        updateTuple(styleVariant, style, Result{});
+
+        TupleUpdater<Style, Tuple, N-1>::update(plotStyles, style);
+    }
+};
+
+template<class Style, class Tuple>
+struct TupleUpdater<Style, Tuple, 1> {
+    static void update(Tuple& plotStyles, const Style& style)
+    {
+        using StyleVariant = std::tuple_element_t<0, Tuple>;
+
+        static_assert(is_variant<StyleVariant>::value, "The Styles template parameter in Qplot<Styles> must be a tuple containing only std::variants");
+        using Result = variant_contains_type<Style, StyleVariant>;
+
+        auto& styleVariant = std::get<0>(plotStyles);
+        updateTuple(styleVariant, style, Result{});
+    }
+};
+
+// Todo: can't we just have a base case for when N=0?
+template<class Style, class Tuple>
+struct TupleUpdater<Style, Tuple, 0> {
+    static void update(Tuple& plotStyles, const Style& style)
+    {
+    }
+};
+
 
 template <typename T>
 void objAction(std::ostream& os, const T& obj)
@@ -143,7 +252,7 @@ struct is_canvas_style {
 };
 
 template <typename T, typename P>
-struct is_canvas_style<T, P, std::enable_if_t<has_member_function<T, void(Qplot<P,void>&)>::value>> {
+struct is_canvas_style<T, P, std::enable_if_t<has_member_function<T, void(Subprocess<P>&)>::value>> {
     static constexpr bool value = true;
 };
 
@@ -157,6 +266,6 @@ struct is_canvas_style<T, P, std::enable_if_t<has_member_function<T, void(Qplot<
 // };
 
 // template <typename T, typename P>
-// struct is_object_style<T, P, std::enable_if_t<has_member_function<T, void(Qplot<P>&,const T&)>::value>> {
+// struct is_object_style<T, P, std::enable_if_t<has_member_function<T, void(Subprocess<P>&,const T&)>::value>> {
 //     static constexpr bool value = true;
 // };

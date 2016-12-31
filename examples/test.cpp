@@ -6,7 +6,7 @@
 using namespace std;
 
 struct CanvasStyle {
-	void operator()(Qplot<Gnuplot>& gnuplot) const {}
+	void operator()(Subprocess<Gnuplot>& gnuplot) const {}
 };
 
 struct ObjectStyle {

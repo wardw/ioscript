@@ -16,6 +16,7 @@ using PlotStyles = std::unordered_map<size_t, std::any>;
 
 // Specializations in client code
 template <typename T> struct associated_styles;
+template <typename T> struct style_variant;
 
 template <typename T>
 struct Styles;
@@ -23,7 +24,7 @@ struct Styles;
 template <typename P, typename S = void>
 class Qplot
 {
-    std::unique_ptr<Subprocess<P>> process_;
+    std::unique_ptr<Subprocess<P>> subprocess_;
     std::ostringstream header_;
 
     PlotStyles plotStyles_;
@@ -32,7 +33,7 @@ class Qplot
 public:
     template <typename... Ts>
     Qplot(Ts&&... args) :
-        process_(std::make_unique<Subprocess<P>>())
+        subprocess_(std::make_unique<Subprocess<P>>())
     {
         addToHeader(args...);
     }
@@ -41,16 +42,17 @@ public:
 
 	// Arg is an object-style
     template <typename T, typename... Ts,
-              // typename = typename Styles<S>::types ,
               std::enable_if_t<is_object_style<T>::value, int> = 0>
     void processArgs(const T& style, const Ts&... args)
     {
 		// Nothing to plot now, but update our plotStyles_ with this style where variants that support it
-		using ObjTypes = typename T::supported_types;
-        constexpr size_t NumObjects = std::tuple_size_v<ObjTypes>;
-		MapUpdater<T, PlotStyles, ObjTypes, NumObjects>::update(plotStyles_, style);
+		// using ObjTypes = typename T::supported_types;
+        // constexpr size_t NumObjects = std::tuple_size_v<ObjTypes>;
+		// MapUpdater<T, PlotStyles, ObjTypes, NumObjects>::update(plotStyles_, style);
 	
-        printTuple(std::cout, typename Styles<S>::types{});
+        using StyleTuple = typename Styles<S>::tuple;
+        constexpr size_t NumStyles = std::tuple_size_v<StyleTuple>;
+        TupleUpdater<T, StyleTuple, NumStyles>::update(styles_.t, style);
 
 		processArgs(args...);
     }
@@ -60,9 +62,7 @@ public:
               std::enable_if_t<is_canvas_style<T,P>::value, int> = 0>
     void processArgs(const T& style, const Ts&... args)
     {
-        // plotStyle(*this, style);
-        style(*this);
-
+        style(*subprocess_);
 		processArgs(args...);
     }
 
@@ -73,14 +73,16 @@ public:
     void processArgs(const T& obj, const Ts&... args)
     {
 		// Get the style variant that's currently associated with the arg type T
-        size_t key = associated_styles<T>::type::id;
-        using StyleVariant = typename associated_styles<T>::type::supported_styles;
-		auto styleVar = std::any_cast<StyleVariant>(plotStyles_[key]);
+        // size_t key = associated_styles<T>::type::id;
+        // using StyleVariant = typename associated_styles<T>::type::supported_styles;
+        // auto styleVar = std::any_cast<StyleVariant>(plotStyles_[key]);
+
+        constexpr size_t key = tuple_contains_type<typename style_variant<T>::type, typename Styles<S>::tuple>::value;
+        auto styleVar = std::get<key>(styles_.t);
 
 		// Plot this object
 		std::visit([this,&obj](auto&& style) {
-			// plotObject(*this, style, obj);
-            style(*this, obj);
+            style(*subprocess_, obj);
 		}, styleVar);
 
 		processArgs(args...);
@@ -98,34 +100,34 @@ public:
         // Finally, close this process and reopen with a fresh instance
         // + This ends out code stream to the process, which e.g. for python alows the process to start executin
         // + Also important that each call to plot (aside from the intentional header) is stateless
-        process_.reset();  // destory first
-        process_ = std::make_unique<Subprocess<P>>();
+        subprocess_.reset();  // destory first
+        subprocess_ = std::make_unique<Subprocess<P>>();
 	}
 
     template <typename... Ts>
     void addToHeader(const Ts&... args)
     {
         // Everything to cfout goes to our local ostringstream
-        auto cout_buffer = process_->cfout().rdbuf();
-        process_->cfout().rdbuf(header_.rdbuf());
+        auto cout_buffer = subprocess_->cfout().rdbuf();
+        subprocess_->cfout().rdbuf(header_.rdbuf());
 
         // Capture in local header_ buffer
         processArgs(args...);
 
         // Swap back
-        process_->cfout().rdbuf(cout_buffer);
+        subprocess_->cfout().rdbuf(cout_buffer);
     }
 
     // cf_ostream& cfout() { return *cfout_; }
-    fd_ostream& fdout() { return process_->fdout(); }
+    fd_ostream& fdout() { return subprocess_->fdout(); }
 
-    int fd_r() { return process_->fd_r(); }
-    int fd_w() { return process_->fd_w(); }
+    int fd_r() { return subprocess_->fd_r(); }
+    int fd_w() { return subprocess_->fd_w(); }
 
     template <typename U>
     friend Qplot& operator<<(Qplot& qplot, const U& str)
     {
-        *qplot.process_ << str;
+        *qplot.subprocess_ << str;
         return qplot;
     }
 };

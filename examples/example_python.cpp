@@ -5,16 +5,11 @@
 
 using namespace std;
 
-
-template <>
-struct Styles<void> { using types = std::tuple<std::vector<int>, std::map<int,int>>; };
-
-
 // Perhaps sufficient for now. The important point is to close the (inherited) write end of the pipe
 // in this subprocess and avoid it waiting on itself when reading up to EOF on the read end
 struct Header
 {
-	void operator()(Qplot<Python>& python) const {
+	void operator()(Subprocess<Python>& python) const {
         python <<
 R"(
 import os
@@ -25,7 +20,7 @@ fo = os.fdopen( )" << python.fd_r() << R"(, 'r')
 	}
 };
 
-void sendData(Qplot<Python>& python, const std::vector<int>& obj)
+void sendData(Subprocess<Python>& python, const std::vector<int>& obj)
 {
 	// Just send a line each for x and y that matches our python read
     for (int i=0; i<obj.size(); i++) {
@@ -39,7 +34,7 @@ void sendData(Qplot<Python>& python, const std::vector<int>& obj)
 	python.fdout() << endl;
 }
 
-void sendData(Qplot<Python>& python, const std::map<int,int>& obj)
+void sendData(Subprocess<Python>& python, const std::map<int,int>& obj)
 {
     for (auto elem : obj) {
 		python.fdout() << elem.first << ' ';
@@ -53,7 +48,7 @@ void sendData(Qplot<Python>& python, const std::map<int,int>& obj)
 }
 
 // The one requirement is that if an data object T supports a set of 'style' variants (BarChart, LineChart etc), each 'style'
-// must implement operator()(Qplot<P>&, T obj) for plot object T, regardless of the currently chosen alternative
+// must implement operator()(Subprocess<P>&, T obj) for plot object T, regardless of the currently chosen alternative
 struct BarChart
 {
 	using supported_types = std::tuple<std::vector<int>,std::map<int,int>>;
@@ -62,7 +57,7 @@ struct BarChart
 	// (But defining separate overloads to select individually on each possible type works too.
 	//  Just make sure to provide defintions for each possible object T that's passed)
 	template <typename T>
-	void operator()(Qplot<Python>& python, const T& obj) const
+	void operator()(Subprocess<Python>& python, const T& obj) const
 	{
         python <<
 R"(
@@ -93,7 +88,7 @@ struct LineChart
 	using supported_types = std::tuple<std::vector<int>,std::map<int,int>>;
 
 	template <typename T>
-	void operator()(Qplot<Python>& python, const T& obj) const
+	void operator()(Subprocess<Python>& python, const T& obj) const
 	{
         python <<
 R"(
@@ -111,7 +106,7 @@ plt.plot(x, y, 'o-')
 };
 
 struct NumPlots {
-	void operator()(Qplot<Python>& python) const {
+	void operator()(Subprocess<Python>& python) const {
 		python << "numPlots = " << numPlots << '\n'
 		       << "plotNum = 0" << '\n';
 	}
@@ -119,13 +114,21 @@ struct NumPlots {
 };
 
 struct Show {
-	void operator()(Qplot<Python>& python) const { python << "plt.show()\n"; }
+	void operator()(Subprocess<Python>& python) const { python << "plt.show()\n"; }
 };
 
-struct Data1d { static constexpr size_t id = 0; using supported_styles = std::variant<LineChart, BarChart>; };
+// struct Data1d { static constexpr size_t id = 0; using supported_styles = std::variant<LineChart, BarChart>; };
 
-template <> struct associated_styles<std::vector<int>>   { using type = Data1d; };
-template <> struct associated_styles<std::map<int,int>>  { using type = Data1d; };
+// template <> struct associated_styles<std::vector<int>>   { using type = Data1d; };
+// template <> struct associated_styles<std::map<int,int>>  { using type = Data1d; };
+
+using Data1D = std::variant<LineChart,BarChart>;
+
+template <> struct style_variant<std::vector<int>>  { using type = Data1D; };
+template <> struct style_variant<std::map<int,int>> { using type = Data1D; };
+
+template <> struct Styles<void> { using tuple = std::tuple<Data1D>; tuple t; };
+
 
 void example_python()
 {
@@ -148,7 +151,7 @@ void example_python()
 	}
 
 	Qplot<Python> qp(Header{});
-    qp.plot(LineChart(), vals1, vals2); //, Show());
-    // qp.plot(BarChart(), NumPlots{2}, vals1, vals2, Show());
-    // qp.plot(LineChart(), vals2, BarChart(), NumPlots{1}, vals1, Show());
+    qp.plot(LineChart(), vals1, vals2, Show());
+    qp.plot(BarChart(), NumPlots{2}, vals1, vals2, Show());
+    qp.plot(LineChart(), vals2, BarChart(), NumPlots{1}, vals1, Show());
 }

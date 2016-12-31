@@ -16,7 +16,7 @@ include_directories(..)
 set(qplot_src "main.cpp"
 	          "test.cpp"
 	          "example_python.cpp"
-	          # "example_gnuplot.cpp"
+	          "example_gnuplot.cpp"
 	          "example_process.cpp"
 	          )
 

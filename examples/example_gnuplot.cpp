@@ -11,7 +11,7 @@ constexpr int NJ = 20;
 
 using Array2d = std::array<std::array<int, NJ>, NI>;
 
-void sendData(Qplot<Gnuplot>& gnuplot, const Array2d& arr)
+void sendData(Subprocess<Gnuplot>& gnuplot, const Array2d& arr)
 {
     for (int i=0; i<arr.size(); i++)
     {
@@ -28,7 +28,7 @@ struct HeatMap
 	using supported_types = std::tuple<Array2d>;
 
 	template<typename T>
-	void operator()(Qplot<Gnuplot>& gnuplot, const T& obj) const
+	void operator()(Subprocess<Gnuplot>& gnuplot, const T& obj) const
 	{
     	gnuplot <<  "plot '-' using 1:2:3 with image\n";
         sendData(gnuplot, obj);
@@ -40,7 +40,7 @@ struct NumberGrid
 	using supported_types = std::tuple<Array2d>;
 
 	template<typename T>
-	void operator()(Qplot<Gnuplot>& gnuplot, const T& obj) const
+	void operator()(Subprocess<Gnuplot>& gnuplot, const T& obj) const
 	{
     	gnuplot <<  "plot '-' using 1:2:3 with image"
     	        <<     ", '-' using 1:2:3 with labels font \"PTMono,8\""
@@ -57,7 +57,7 @@ struct ContourPlot
     using supported_types = std::tuple<Array2d>;
 
     template<typename T>
-    void operator()(Qplot<Gnuplot>& gnuplot, const T& obj) const
+    void operator()(Subprocess<Gnuplot>& gnuplot, const T& obj) const
     {
         gnuplot << "set dgrid3d " << NI << ", " << NJ << "\n"
                 << "set contour surface\n"
@@ -72,7 +72,7 @@ struct ContourPlot
 
 struct Header
 {
-    void operator()(Qplot<Gnuplot>& gnuplot) const {
+    void operator()(Subprocess<Gnuplot>& gnuplot) const {
         gnuplot << "set terminal png size 640, 480\n"
                 << "set output 'output.png'\n";
     }
@@ -80,7 +80,7 @@ struct Header
 
 struct Filename
 {
-    void operator()(Qplot<Gnuplot>& gnuplot) const {
+    void operator()(Subprocess<Gnuplot>& gnuplot) const {
         gnuplot << "set output '" << filename << ".png'\n";
     }
     std::string filename = "output.png";
@@ -88,7 +88,7 @@ struct Filename
 
 struct ImageSize
 {
-    void operator()(Qplot<Gnuplot>& gnuplot) const {
+    void operator()(Subprocess<Gnuplot>& gnuplot) const {
         gnuplot << "set terminal png size " << size_x << ", " << size_y << "\n";
     }
     unsigned size_x = 640;
@@ -105,7 +105,7 @@ struct Colours
 
     Colours(Palette palette) : palette(palette) {}
 
-    void operator()(Qplot<Gnuplot>& gnuplot) const {
+    void operator()(Subprocess<Gnuplot>& gnuplot) const {
         switch (palette)
         {
             case OCEAN:    gnuplot << "set palette rgbformulae 23,28,3 \n";  break;
@@ -118,9 +118,15 @@ struct Colours
 };
 
 // id must be unique (so here, just within this translation unit)
-struct Scalar2d { static constexpr size_t id = 0; using supported_styles = std::variant<HeatMap, NumberGrid, ContourPlot>; };
+// struct Scalar2d { static constexpr size_t id = 0; using supported_styles = std::variant<HeatMap, NumberGrid, ContourPlot>; };
 
-template <> struct associated_styles<Array2d> { using type = Scalar2d; };
+// template <> struct associated_styles<Array2d> { using type = Scalar2d; };
+
+using Scalar2D = std::variant<HeatMap, NumberGrid, ContourPlot>;
+
+template <> struct Styles<void> { using tuple = std::tuple<Scalar2D>; tuple t; };
+
+template <> struct style_variant<Array2d> { using type = Scalar2D; };
 
 void example_gnuplot()
 {
