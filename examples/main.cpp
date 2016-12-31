@@ -14,9 +14,9 @@ int main()
 {
 	testing();
 
-	// example_python();
+	example_python();
 	// example_gnuplot();
-	example_process();
+	// example_process();
 
 	return 0;
 }

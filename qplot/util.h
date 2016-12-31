@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cxxabi.h>
 
 // Map updater
 
@@ -38,6 +39,51 @@ struct MapUpdater<T, Map, ObjTypes, 0> {
     {
     }
 };
+
+
+template <typename T>
+std::string objName(const T& obj)
+{
+    std::ostringstream os;
+    int info;
+    os << abi::__cxa_demangle(typeid(obj).name(),0,0,&info);
+    return os.str();
+}
+
+template <typename T>
+void objAction(std::ostream& os, const T& obj)
+{
+    int info;
+    os << objName(obj);
+    // os << obj;
+}
+
+template<class Tuple, std::size_t N>
+struct TuplePrinter {
+    static void printTuple(std::ostream& os, const Tuple& t)
+    {
+        // print, then recurse
+        objAction(os, std::get<N-1>(t));
+        os << " ";
+        TuplePrinter<Tuple, N-1>::printTuple(os, t);
+    }
+};
+
+template<class Tuple>
+struct TuplePrinter<Tuple, 1>{
+    static void printTuple(std::ostream& os, const Tuple& t)
+    {
+        // some common operation on each object of the tuple
+        objAction(os, std::get<0>(t));
+        os << " (end)" << std::endl;
+    }
+};
+
+template<class... Args>
+void printTuple(std::ostream& os, const std::tuple<Args...>& t)
+{
+    TuplePrinter<decltype(t), sizeof...(Args)>::printTuple(os, t);
+}
 
 
 // Determine wether a plot method of the right type exists for a class
@@ -88,7 +134,7 @@ struct is_object_style<T, typename std::enable_if<std::tuple_size<typename T::su
 };
 
 
-template <typename P>
+template <typename P, typename S>
 class Qplot;
 
 template <typename T, typename P, typename U = void>
@@ -97,7 +143,7 @@ struct is_canvas_style {
 };
 
 template <typename T, typename P>
-struct is_canvas_style<T, P, std::enable_if_t<has_member_function<T, void(Qplot<P>&)>::value>> {
+struct is_canvas_style<T, P, std::enable_if_t<has_member_function<T, void(Qplot<P,void>&)>::value>> {
     static constexpr bool value = true;
 };
 

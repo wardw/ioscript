@@ -17,25 +17,31 @@ using PlotStyles = std::unordered_map<size_t, std::any>;
 // Specializations in client code
 template <typename T> struct associated_styles;
 
-template <typename P>
+template <typename T>
+struct Styles;
+
+template <typename P, typename S = void>
 class Qplot
 {
-    std::unique_ptr<Subprocess<P>> process_ = nullptr;
+    std::unique_ptr<Subprocess<P>> process_;
     std::ostringstream header_;
+
+    PlotStyles plotStyles_;
+    Styles<S> styles_;
 
 public:
     template <typename... Ts>
-	Qplot(Ts&&... args) : process_(std::make_unique<Subprocess<P>>())
+    Qplot(Ts&&... args) :
+        process_(std::make_unique<Subprocess<P>>())
     {
         addToHeader(args...);
     }
-
-    PlotStyles plotStyles_;
 
     void processArgs() {}
 
 	// Arg is an object-style
     template <typename T, typename... Ts,
+              // typename = typename Styles<S>::types ,
               std::enable_if_t<is_object_style<T>::value, int> = 0>
     void processArgs(const T& style, const Ts&... args)
     {
@@ -44,6 +50,8 @@ public:
         constexpr size_t NumObjects = std::tuple_size_v<ObjTypes>;
 		MapUpdater<T, PlotStyles, ObjTypes, NumObjects>::update(plotStyles_, style);
 	
+        printTuple(std::cout, typename Styles<S>::types{});
+
 		processArgs(args...);
     }
 

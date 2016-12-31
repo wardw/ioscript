@@ -5,6 +5,11 @@
 
 using namespace std;
 
+
+template <>
+struct Styles<void> { using types = std::tuple<std::vector<int>, std::map<int,int>>; };
+
+
 // Perhaps sufficient for now. The important point is to close the (inherited) write end of the pipe
 // in this subprocess and avoid it waiting on itself when reading up to EOF on the read end
 struct Header
@@ -122,7 +127,6 @@ struct Data1d { static constexpr size_t id = 0; using supported_styles = std::va
 template <> struct associated_styles<std::vector<int>>   { using type = Data1d; };
 template <> struct associated_styles<std::map<int,int>>  { using type = Data1d; };
 
-
 void example_python()
 {
 	std::default_random_engine gen;
@@ -144,7 +148,7 @@ void example_python()
 	}
 
 	Qplot<Python> qp(Header{});
-    qp.plot(LineChart(), vals1, vals2, Show());
-    qp.plot(BarChart(), NumPlots{2}, vals1, vals2, Show());
-    qp.plot(LineChart(), vals2, BarChart(), NumPlots{1}, vals1, Show());
+    qp.plot(LineChart(), vals1, vals2); //, Show());
+    // qp.plot(BarChart(), NumPlots{2}, vals1, vals2, Show());
+    // qp.plot(LineChart(), vals2, BarChart(), NumPlots{1}, vals1, Show());
 }

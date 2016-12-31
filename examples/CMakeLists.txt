@@ -13,7 +13,12 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lstdc++ -std=c++1z -stdlib=libc++ -nost
 
 include_directories(..)
 
-set(qplot_src "main.cpp" "test.cpp" "example_python.cpp" "example_gnuplot.cpp" "example_process.cpp")
+set(qplot_src "main.cpp"
+	          "test.cpp"
+	          "example_python.cpp"
+	          # "example_gnuplot.cpp"
+	          "example_process.cpp"
+	          )
 
 # Executable
 add_executable(qplot ${qplot_src})
