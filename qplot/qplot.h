@@ -34,21 +34,36 @@ public:
 
     void processArgs() {}
 
-	// Arg is a canvas-style
+	// Arg is a canvas-style only
     template <typename T, typename... Ts,
-              std::enable_if_t<is_canvas_style<T,P>::value, int> = 0>
+              std::enable_if_t< is_canvas_style<T,P>::value &&
+                               !is_object_style<T,P>::value, int> = 0>
     void processArgs(const T& style, const Ts&... args)
     {
         style(*subprocess_);
 		processArgs(args...);
     }
 
-    // Arg is an object-style
+    // Arg is an object-style only
     template <typename T, typename... Ts,
-              std::enable_if_t<is_object_style<T,P>::value, int> = 0>
+              std::enable_if_t< is_object_style<T,P>::value &&
+                               !is_canvas_style<T,P>::value, int> = 0>
     void processArgs(const T& style, const Ts&... args)
     {
-        // Nothing to plot now, but update our styles_ with this style where variants that support it
+        // Update styles_ with this style for all variants in style_ that support it
+        constexpr size_t NumStyles = std::tuple_size_v<S>;
+        TupleUpdater<T, S, NumStyles>::update(styles_, style);
+
+        processArgs(args...);
+    }
+
+    // Arg is both an object-style and canvas_style
+    template <typename T, typename... Ts,
+              std::enable_if_t<is_object_style<T,P>::value &&
+                               is_canvas_style<T,P>::value, int> = 0>
+    void processArgs(const T& style, const Ts&... args)
+    {
+        style(*subprocess_);
 
         constexpr size_t NumStyles = std::tuple_size_v<S>;
         TupleUpdater<T, S, NumStyles>::update(styles_, style);
