@@ -4,6 +4,7 @@
 #include <random>
 
 using namespace std;
+using namespace qp;
 
 struct Header
 {
@@ -99,7 +100,7 @@ struct Show {
 };
 
 
-using Data1D = std::variant<LineChart,BarChart>;
+using Data1D = qp::variant<LineChart,BarChart>;
 
 // Consider all vectors as Data1D, and also std::map<int,int>
 template <typename T> struct has_styles<std::vector<T>>     { using type = Data1D; };

@@ -7,6 +7,7 @@
 #include <cassert>
 #include <unistd.h>  // for write
 
+namespace qp {
 
 // Josuttis Chapter 15 p835
 class fdoutbuf : public std::streambuf
@@ -149,3 +150,5 @@ private:
     int filedes_[2];
     FILE* file_;
 };
+
+} // namespace qp

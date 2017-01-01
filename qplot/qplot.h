@@ -5,14 +5,44 @@
 #include <unordered_map>
 #include <tuple>
 #include <type_traits>
-#include <variant>
-#include <any>
 
 // Enable this macro definition to send all output to stdout in exactly the form as if sent to the subprocess
-#define QPLOT_DEBUG
+// #define QPLOT_DEBUG
+
+#ifdef WITH_BOOST_VARIANT
+    #include <boost/variant.hpp>
+#else
+    #include <variant>
+#endif
+
+
+// Name qp::variant as either boost or stl
+namespace qp {
+
+#ifdef WITH_BOOST_VARIANT
+    using boost::variant;
+    using monostate = boost::blank;
+
+    template <typename... Args>
+    auto visit(Args&&... args) {
+      return boost::apply_visitor(std::forward<Args>(args)...);
+    }
+#else
+    using std::variant;
+    using monostate = std::monostate;
+
+    template <typename... Args>
+    auto visit(Args&&... args) {
+      return std::visit(std::forward<Args>(args)...);
+    }
+#endif
+
+}
 
 #include "subprocess.h"
 #include "util.h"
+
+namespace qp {
 
 // With specializations in client code
 template <typename T>
@@ -84,7 +114,7 @@ public:
     void processArgs(const T& style, const Ts&... args)
     {
         // Update styles_ with this style for all variants in style_ that support it
-        constexpr size_t NumStyles = std::tuple_size_v<S>;
+        constexpr size_t NumStyles = std::tuple_size<S>::value;
         TupleUpdater<T, S, NumStyles>::update(styles_, style);
 
         processArgs(args...);
@@ -98,7 +128,7 @@ public:
     {
         style(*subprocess_);
 
-        constexpr size_t NumStyles = std::tuple_size_v<S>;
+        constexpr size_t NumStyles = std::tuple_size<S>::value;
         TupleUpdater<T, S, NumStyles>::update(styles_, style);
 
         processArgs(args...);
@@ -115,7 +145,7 @@ public:
         auto styleVar = std::get<key>(styles_);
 
 		// Plot this object
-		std::visit([this,&obj](auto&& style) {
+        qp::visit([this,&obj](auto&& style) {
             style(*subprocess_, obj);
 		}, styleVar);
 
@@ -171,6 +201,9 @@ public:
         return qplot;
     }
 };
+
+} // namespace qp
+
 
 // Main convenience method for one-liner plotting
 // template <typename... Ts>

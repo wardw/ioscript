@@ -1,6 +1,7 @@
 #include "qplot/qplot.h"
 
 using namespace std;
+using namespace qp;
 
 // Using Ruby as an example
 // asuming Ruby is installed and the command `ruby` is visible in your path

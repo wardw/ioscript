@@ -1,10 +1,10 @@
-#include <vector>
 #include <tuple>
-#include <fstream>
+#include <array>
 
 #include "qplot/qplot.h"
 
 using namespace std;
+using namespace qp;
 
 constexpr int SIZE_M = 20;
 constexpr int SIZE_N = 20;
@@ -115,9 +115,9 @@ struct Colours
 };
 
 
-using Scalar2D = std::variant<HeatMap, NumberGrid, ContourPlot>;
+using Scalar2D = qp::variant<HeatMap, NumberGrid, ContourPlot>;
 
-template <>                   struct has_styles<MyArray>      { using type = Scalar2D; };
+template <> struct has_styles<MyArray> { using type = Scalar2D; };
 
 // Alternatively, associate 2d arrays of all sizes with our Scalar2D variant
 template <size_t M, size_t N> struct has_styles<Array2d<M,N>> { using type = Scalar2D; };

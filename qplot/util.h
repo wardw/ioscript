@@ -1,9 +1,9 @@
 #pragma once
 
-#include <variant>
-
 ///*
 #include <cxxabi.h>
+
+namespace qp {
 
 template <typename T>
 std::string objName(const T& obj)
@@ -26,15 +26,15 @@ struct has_type;
 
 // We've exhausted searching all variant elements - not found
 template <typename T, size_t N>
-struct has_type<T, N, std::variant<>> : std::integral_constant<int,-1> {};
+struct has_type<T, N, variant<monostate>> : std::integral_constant<int,-1> {};
 
 // A match: T matches the first T of the variant, now at position N
 template <typename T, size_t N, typename... Ts>
-struct has_type<T, N, std::variant<T, Ts...>> : std::integral_constant<int,N> {};
+struct has_type<T, N, variant<T, Ts...>> : std::integral_constant<int,N> {};
 
 // No match: U is not T
 template <typename T, size_t N, typename U, typename... Ts>
-struct has_type<T, N, std::variant<U, Ts...>> : has_type<T, N+1, std::variant<Ts...>> {};
+struct has_type<T, N, variant<U, Ts...>> : has_type<T, N+1, variant<Ts...>> {};
 
 template <typename T, typename Variant>
 using variant_contains_type = typename has_type<T, 0, Variant>::type;
@@ -66,10 +66,11 @@ template <typename T>
 struct is_variant : std::false_type {};
 
 template <typename T, typename... Ts>
-struct is_variant<std::variant<T,Ts...>>  : std::true_type {};
+struct is_variant<variant<T,Ts...>>  : std::true_type {};
 
-static_assert(  is_variant<std::variant<int,float>>::value );
-static_assert( !is_variant<nullptr_t>::value );
+// test
+static_assert( is_variant<variant<int,float>>::value,"");
+static_assert(!is_variant<std::nullptr_t>::value, "");
 
 template <typename StyleVariant, typename Style, int key>
 void updateTuple(StyleVariant& styleVariant, const Style& style, std::integral_constant<int,key>)
@@ -90,7 +91,8 @@ struct TupleUpdater {
     {
         using StyleVariant = std::tuple_element_t<N-1, Tuple>;
 
-        static_assert(is_variant<StyleVariant>::value, "The Styles template parameter in Qplot<Styles> must be a tuple containing only std::variants");
+        static_assert(is_variant<StyleVariant>::value,
+                      "The Styles template parameter in Qplot<Styles> must be a tuple containing only variants");
         using Result = variant_contains_type<Style, StyleVariant>;
 
         auto& styleVariant = std::get<N-1>(plotStyles);
@@ -106,7 +108,8 @@ struct TupleUpdater<Style, Tuple, 1> {
     {
         using StyleVariant = std::tuple_element_t<0, Tuple>;
 
-        static_assert(is_variant<StyleVariant>::value, "The Styles template parameter in Qplot<Styles> must be a tuple containing only std::variants");
+        static_assert(is_variant<StyleVariant>::value,
+                     "The Styles template parameter in Qplot<Styles> must be a tuple containing only variants");
         using Result = variant_contains_type<Style, StyleVariant>;
 
         auto& styleVariant = std::get<0>(plotStyles);
@@ -215,3 +218,5 @@ template <typename T, typename P>
 struct is_object_style<T, P, std::enable_if_t<has_member_function<T, void(Subprocess<P>&,const void*&)>::value>> {
     static constexpr bool value = true;
 };
+
+} // namespace qp
