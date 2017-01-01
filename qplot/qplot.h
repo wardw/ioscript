@@ -40,23 +40,6 @@ public:
 
     void processArgs() {}
 
-	// Arg is an object-style
-    template <typename T, typename... Ts,
-              std::enable_if_t<is_object_style<T>::value, int> = 0>
-    void processArgs(const T& style, const Ts&... args)
-    {
-		// Nothing to plot now, but update our plotStyles_ with this style where variants that support it
-		// using ObjTypes = typename T::supported_types;
-        // constexpr size_t NumObjects = std::tuple_size_v<ObjTypes>;
-		// MapUpdater<T, PlotStyles, ObjTypes, NumObjects>::update(plotStyles_, style);
-	
-        using StyleTuple = typename Styles<S>::tuple;
-        constexpr size_t NumStyles = std::tuple_size_v<StyleTuple>;
-        TupleUpdater<T, StyleTuple, NumStyles>::update(styles_.t, style);
-
-		processArgs(args...);
-    }
-
 	// Arg is a canvas-style
     template <typename T, typename... Ts,
               std::enable_if_t<is_canvas_style<T,P>::value, int> = 0>
@@ -66,17 +49,27 @@ public:
 		processArgs(args...);
     }
 
+    // Arg is an object-style
+    template <typename T, typename... Ts,
+              std::enable_if_t<is_object_style<T,P>::value, int> = 0>
+    void processArgs(const T& style, const Ts&... args)
+    {
+        // Nothing to plot now, but update our styles_ with this style where variants that support it
+
+        using StyleTuple = typename Styles<S>::tuple;
+        constexpr size_t NumStyles = std::tuple_size_v<StyleTuple>;
+        TupleUpdater<T, StyleTuple, NumStyles>::update(styles_.t, style);
+
+        processArgs(args...);
+    }
+
     // Arg is an object to plot
     template <typename T, typename... Ts,
-              std::enable_if_t<!is_object_style<T>::value &&
+              std::enable_if_t<!is_object_style<T,P>::value &&
                                !is_canvas_style<T,P>::value, int> = 0>
     void processArgs(const T& obj, const Ts&... args)
     {
 		// Get the style variant that's currently associated with the arg type T
-        // size_t key = associated_styles<T>::type::id;
-        // using StyleVariant = typename associated_styles<T>::type::supported_styles;
-        // auto styleVar = std::any_cast<StyleVariant>(plotStyles_[key]);
-
         constexpr size_t key = tuple_contains_type<typename has_styles<T>::type, typename Styles<S>::tuple>::value;
         auto styleVar = std::get<key>(styles_.t);
 

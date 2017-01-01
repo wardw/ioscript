@@ -25,8 +25,6 @@ void sendData(Subprocess<Gnuplot>& gnuplot, const Array2d& arr)
 
 struct HeatMap
 {
-	using supported_types = std::tuple<Array2d>;
-
 	template<typename T>
 	void operator()(Subprocess<Gnuplot>& gnuplot, const T& obj) const
 	{
@@ -37,8 +35,6 @@ struct HeatMap
 
 struct NumberGrid
 {
-	using supported_types = std::tuple<Array2d>;
-
 	template<typename T>
 	void operator()(Subprocess<Gnuplot>& gnuplot, const T& obj) const
 	{
@@ -54,8 +50,6 @@ struct NumberGrid
 
 struct ContourPlot
 {
-    using supported_types = std::tuple<Array2d>;
-
     template<typename T>
     void operator()(Subprocess<Gnuplot>& gnuplot, const T& obj) const
     {
@@ -117,16 +111,13 @@ struct Colours
     Palette palette;
 };
 
-// id must be unique (so here, just within this translation unit)
-// struct Scalar2d { static constexpr size_t id = 0; using supported_styles = std::variant<HeatMap, NumberGrid, ContourPlot>; };
-
-// template <> struct associated_styles<Array2d> { using type = Scalar2d; };
 
 using Scalar2D = std::variant<HeatMap, NumberGrid, ContourPlot>;
 
 template <> struct Styles<void> { using tuple = std::tuple<Scalar2D>; tuple t; };
 
 template <> struct has_styles<Array2d> { using type = Scalar2D; };
+
 
 void example_gnuplot()
 {

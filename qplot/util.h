@@ -1,8 +1,9 @@
 #pragma once
 
 #include <variant>
-#include <cxxabi.h>
 
+///*
+#include <cxxabi.h>
 
 template <typename T>
 std::string objName(const T& obj)
@@ -12,7 +13,7 @@ std::string objName(const T& obj)
     os << abi::__cxa_demangle(typeid(obj).name(),0,0,&info);
     return os.str();
 }
-
+//*/
 
 // Find wether a variant contains a given type
 
@@ -59,44 +60,6 @@ struct has_type<T, N, std::tuple<U, Ts...>> : has_type<T, N+1, std::tuple<Ts...>
 template <typename T, typename Tuple>
 using tuple_contains_type = typename has_type<T, 0, Tuple>::type;
 
-
-// Map updater
-
-template <typename T> struct associated_styles;
-
-template<class T, class Map, class ObjTypes, std::size_t N>
-struct MapUpdater {
-    static void update(Map& plotStyles, const T& style)
-    {
-		using Object = std::tuple_element_t<N-1, ObjTypes>;
-        using StyleVariant = typename associated_styles<Object>::type::supported_styles;
-
-        size_t key = associated_styles<Object>::type::id;
-        plotStyles[key] = StyleVariant{style};
-
-        MapUpdater<T, Map, ObjTypes, N-1>::update(plotStyles, style);
-    }
-};
- 
-template<class T, class Map, class ObjTypes>
-struct MapUpdater<T, Map, ObjTypes, 1> {
-    static void update(Map& plotStyles, const T& style)
-    {
-		using Object = std::tuple_element_t<0, ObjTypes>;
-        using StyleVariant = typename associated_styles<Object>::type::supported_styles;
-
-        size_t key = associated_styles<Object>::type::id;
-        plotStyles[key] = StyleVariant{style};
-    }
-};
-
-// Todo: can't we just have a base case for when N=0?
-template<class T, class Map, class ObjTypes>
-struct MapUpdater<T, Map, ObjTypes, 0> {
-    static void update(Map& plotStyles, const T& style)
-    {
-    }
-};
 
 
 template <typename T>
@@ -224,24 +187,8 @@ public:
 
 
 // Determine between 'object styles' and 'canvas styles'
-// + An 'object style' is any type for which the nested type `supported_types` exists, and is a tuple with at least one tuple element
 // + A 'canvas style' is any type which overloads operator() with the type `void(Qplot<P>&)`
-
-template<class T>
-struct Check {
-    using type = void;
-};
-
-template<class T, class U = void>
-struct is_object_style {
-    static constexpr bool value = false;
-};
-
-template<class T>
-struct is_object_style<T, typename std::enable_if<std::tuple_size<typename T::supported_types>::value != 0>::type> {
-    static constexpr bool value = true;
-};
-
+// + An 'object style' works likewise, but for the type `void(Qplot<P>&, constT&)` -- but see note, below
 
 template <typename P, typename S>
 class Qplot;
@@ -256,16 +203,14 @@ struct is_canvas_style<T, P, std::enable_if_t<has_member_function<T, void(Subpro
     static constexpr bool value = true;
 };
 
+// This isn't great - there's probably a better way
+// This tests for a second parameter accepting a `const T&` by checking it supports `void*`
+template <typename T, typename P, typename U = void>
+struct is_object_style {
+    static constexpr bool value = false;
+};
 
-// The below would be more consistent - and would allow constraining the selection to the current subprocess P
-// But it's more fiddly since we also want to ensure that the client can correctly overload the `const T& obj` parameter as necessary
-
-// template <typename T, typename P, typename U = void>
-// struct is_object_style {
-//     static constexpr bool value = false;
-// };
-
-// template <typename T, typename P>
-// struct is_object_style<T, P, std::enable_if_t<has_member_function<T, void(Subprocess<P>&,const T&)>::value>> {
-//     static constexpr bool value = true;
-// };
+template <typename T, typename P>
+struct is_object_style<T, P, std::enable_if_t<has_member_function<T, void(Subprocess<P>&,const void*&)>::value>> {
+    static constexpr bool value = true;
+};

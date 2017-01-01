@@ -51,8 +51,6 @@ void sendData(Subprocess<Python>& python, const std::map<int,int>& obj)
 // must implement operator()(Subprocess<P>&, T obj) for plot object T, regardless of the currently chosen alternative
 struct BarChart
 {
-	using supported_types = std::tuple<std::vector<int>,std::map<int,int>>;
-
 	// Here we just catch all T
 	// (But defining separate overloads to select individually on each possible type works too.
 	//  Just make sure to provide defintions for each possible object T that's passed)
@@ -85,8 +83,6 @@ plotNum += 1
 
 struct LineChart
 {
-	using supported_types = std::tuple<std::vector<int>,std::map<int,int>>;
-
 	template <typename T>
 	void operator()(Subprocess<Python>& python, const T& obj) const
 	{
@@ -117,10 +113,6 @@ struct Show {
 	void operator()(Subprocess<Python>& python) const { python << "plt.show()\n"; }
 };
 
-// struct Data1d { static constexpr size_t id = 0; using supported_styles = std::variant<LineChart, BarChart>; };
-
-// template <> struct associated_styles<std::vector<int>>   { using type = Data1d; };
-// template <> struct associated_styles<std::map<int,int>>  { using type = Data1d; };
 
 using Data1D = std::variant<LineChart,BarChart>;
 
@@ -152,6 +144,11 @@ void example_python()
 
 	Qplot<Python> qp(Header{});
     qp.plot(LineChart(), vals1, vals2, Show());
-    qp.plot(BarChart(), NumPlots{2}, vals1, vals2, Show());
-    qp.plot(LineChart(), vals2, BarChart(), NumPlots{1}, vals1, Show());
+    qp.plot(BarChart{}, NumPlots{2}, vals1, vals2, Show{});
+    qp.plot(LineChart{}, vals2, BarChart{}, NumPlots{1}, vals1, Show{});
+
+    // Or use a lambda
+	qp.plot(LineChart{}, vals2, [](Subprocess<Python>& py) {
+        py << "plt.savefig('vals2.png')" << '\n';
+    });
 }
