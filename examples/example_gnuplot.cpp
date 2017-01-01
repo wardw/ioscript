@@ -139,7 +139,7 @@ void example_gnuplot()
 	Qp qplot(Header{}, HeatMap{}, Colours{Colours::RAINBOW});
     qplot.plot(Filename{"Grid1"}, array);
     qplot.plot(Filename{"Grid2"}, ContourPlot{}, array);
-    qplot.plot(Filename{"Grid3"}, ImageSize{800,600}, array);     // Same as Grid1, but larger (todo: broken!)
+    qplot.plot(Filename{"Grid3"}, ImageSize{800,600}, array);     // Same as Grid1, but larger
 
     qplot.addToHeader(Colours{Colours::OCEAN});
     qplot.plot(array);

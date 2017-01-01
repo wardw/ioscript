@@ -11,14 +11,9 @@
 #include "subprocess.h"
 #include "util.h"
 
-using PlotStyles = std::unordered_map<size_t, std::any>;
-// using PlotStyles = std::array<std::any, MAX_STYLES>;
-
 // With specializations in client code
-template <typename T> struct has_styles;
-
-// template <typename T>
-// struct Styles;
+template <typename T>
+struct has_styles;
 
 template <typename P, typename S>
 class Qplot
@@ -26,8 +21,8 @@ class Qplot
     std::unique_ptr<Subprocess<P>> subprocess_;
     std::ostringstream header_;
 
-    PlotStyles plotStyles_;
     S styles_;
+    S stylesHeader_;
 
 public:
     template <typename... Ts>
@@ -82,10 +77,13 @@ public:
     template <typename... Ts>
 	void plot(const Ts&... args)
 	{
-        // Subprocess header
+        // Replay the header
         *this << header_.str();
 
-        // Recuse into arguments
+        // Reload state for the chosen alternatives
+        styles_ = stylesHeader_;
+
+        // Recurse into arguments
 		processArgs(args...);
 
         // Finally, close this process and reopen with a fresh instance
@@ -101,6 +99,9 @@ public:
         // Everything to cfout goes to our local ostringstream
         auto cout_buffer = subprocess_->cfout().rdbuf();
         subprocess_->cfout().rdbuf(header_.rdbuf());
+
+        // Also save the state of the chosen alternatives
+        stylesHeader_ = styles_;
 
         // Capture in local header_ buffer
         processArgs(args...);
