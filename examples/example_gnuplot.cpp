@@ -6,12 +6,15 @@
 
 using namespace std;
 
-constexpr int NI = 20;
-constexpr int NJ = 20;
+constexpr int SIZE_M = 20;
+constexpr int SIZE_N = 20;
 
-using Array2d = std::array<std::array<int, NJ>, NI>;
+template <size_t M, size_t N>
+using Array2d = std::array<std::array<int, M>, N>;
 
-void sendData(Subprocess<Gnuplot>& gnuplot, const Array2d& arr)
+using MyArray = Array2d<SIZE_M,SIZE_N>;
+
+void sendData(Subprocess<Gnuplot>& gnuplot, const MyArray& arr)
 {
     for (int i=0; i<arr.size(); i++)
     {
@@ -53,7 +56,7 @@ struct ContourPlot
     template<typename T>
     void operator()(Subprocess<Gnuplot>& gnuplot, const T& obj) const
     {
-        gnuplot << "set dgrid3d " << NI << ", " << NJ << "\n"
+        gnuplot << "set dgrid3d " << SIZE_M << ", " << SIZE_N << "\n"
                 << "set contour surface\n"
                 << "splot '-' using 1:2:3 with lines linetype 2 linewidth 1\n";
 
@@ -114,19 +117,22 @@ struct Colours
 
 using Scalar2D = std::variant<HeatMap, NumberGrid, ContourPlot>;
 
-template <> struct has_styles<Array2d> { using type = Scalar2D; };
+template <>                   struct has_styles<MyArray>      { using type = Scalar2D; };
+
+// Alternatively, associate 2d arrays of all sizes with our Scalar2D variant
+template <size_t M, size_t N> struct has_styles<Array2d<M,N>> { using type = Scalar2D; };
 
 using MyStyles = std::tuple<Scalar2D>;
 using Qp = Qplot<Gnuplot,MyStyles>;
 
 void example_gnuplot()
 {
-	Array2d array;
+	MyArray array;
 	for (int i=0; i<array.size(); i++)
     {
     	for (int j=0; j<array[0].size(); j++)
   		{
-			array[i][j] = pow(i-NI/2.f,2) - pow(j-NJ/2.f,2);
+			array[i][j] = pow(i-SIZE_M/2.f,2) - pow(j-SIZE_N/2.f,2);
     	}
     }
 

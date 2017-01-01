@@ -116,8 +116,9 @@ struct Show {
 
 using Data1D = std::variant<LineChart,BarChart>;
 
-template <> struct has_styles<std::vector<int>>  { using type = Data1D; };
-template <> struct has_styles<std::map<int,int>> { using type = Data1D; };
+// Consider all vectors as Data1D, and also std::map<int,int>
+template <typename T> struct has_styles<std::vector<T>>     { using type = Data1D; };
+template <>           struct has_styles<std::map<int,int>>  { using type = Data1D; };
 
 using MyStyles = std::tuple<Data1D>;
 using Qp = Qplot<Python,MyStyles>;
