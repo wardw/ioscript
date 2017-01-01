@@ -8,12 +8,44 @@
 #include <variant>
 #include <any>
 
+// Enable this macro definition to send all output to stdout in exactly the form as if sent to the subprocess
+#define QPLOT_DEBUG
+
 #include "subprocess.h"
 #include "util.h"
 
 // With specializations in client code
 template <typename T>
 struct has_styles;
+
+// This adds an implementation detail necessary for all uses
+// For more information see the Subprocess section of README.md and examples_process.cpp
+struct PythonHeader
+{
+    void operator()(Subprocess<Python>& python) const {
+        python << "# This header has been added by Qplot. See qplot.h\n"
+               << "import os\n"
+               << "os.close(" << python.fd_w() << ")\n"
+               << "fo = os.fdopen(" << python.fd_r() << ", 'r')\n"
+               << "\n";
+    }
+};
+
+template <typename P, typename S>
+void addPrivateHeader(Qplot<P,S>& python)
+{
+}
+
+template <typename S>
+void addPrivateHeader(Qplot<Python,S>& python)
+{
+    python.addToHeader(PythonHeader{});
+}
+
+template <typename S>
+void addPrivateHeader(Qplot<Gnuplot,S>& python)
+{
+}
 
 template <typename P, typename S>
 class Qplot
@@ -29,6 +61,7 @@ public:
     Qplot(Ts&&... args) :
         subprocess_(std::make_unique<Subprocess<P>>())
     {
+        addPrivateHeader(*this);
         addToHeader(args...);
     }
 

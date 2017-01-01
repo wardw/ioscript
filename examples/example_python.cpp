@@ -5,22 +5,7 @@
 
 using namespace std;
 
-// Perhaps sufficient for now. The important point is to close the (inherited) write end of the pipe
-// in this subprocess and avoid it waiting on itself when reading up to EOF on the read end
 struct Header
-{
-	void operator()(Subprocess<Python>& python) const {
-        python <<
-R"(
-import os
-os.close( )" << python.fd_w() << R"( )
-fo = os.fdopen( )" << python.fd_r() << R"(, 'r')
-)"
-		<< "\n";
-	}
-};
-
-struct ClientHeader
 {
 	void operator()(Subprocess<Python>& python) const {
 		python << "import matplotlib.pyplot as plt" << '\n';
@@ -143,7 +128,7 @@ void example_python()
 		n++;
 	}
 
-	Qp qp(Header{}, ClientHeader{});
+	Qp qp(Header{});
     qp.plot(vals1, vals2, Show());  // LineChart is automatically the default (the first variant alternative)
     qp.plot(BarChart{2}, vals1, vals2, Show{});
     qp.plot(LineChart{}, vals2, BarChart{1}, vals1, Show{});

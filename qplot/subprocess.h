@@ -7,8 +7,6 @@
 #include <cassert>
 #include <unistd.h>  // for write
 
-// Enable this macro definition to send all output to stdout in exactly the form as if sent to the subprocess
-// #define QPLOT_DEBUG
 
 // Josuttis Chapter 15 p835
 class fdoutbuf : public std::streambuf
