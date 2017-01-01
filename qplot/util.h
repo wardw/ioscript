@@ -80,7 +80,8 @@ void updateTuple(StyleVariant& styleVariant, const Style& style, std::integral_c
 template <typename StyleVariant, typename Style>
 void updateTuple(StyleVariant& styleVariant, const Style& style, std::integral_constant<int,-1>)
 {
-    std::cout << "The styles variant " << objName(styleVariant) << " does not contain the style " << objName(style) << std::endl;
+    // std::clog << "The styles variant " << objName(styleVariant)
+    //           << " does not contain the style " << objName(style) << std::endl;
 }
 
 template<class Style, class Tuple, std::size_t N>

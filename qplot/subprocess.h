@@ -7,6 +7,9 @@
 #include <cassert>
 #include <unistd.h>  // for write
 
+// Enable this macro definition to send all output to stdout in exactly the form as if sent to the subprocess
+// #define QPLOT_DEBUG
+
 // Josuttis Chapter 15 p835
 class fdoutbuf : public std::streambuf
 {
@@ -81,10 +84,15 @@ protected:
 
 struct Null    { static constexpr const char* cmd = "cat > /dev/null"; };
 struct Cat     { static constexpr const char* cmd = "cat"; };
+
+#ifdef QPLOT_DEBUG
+struct Python  { static constexpr const char* cmd = "cat"; };
+struct Gnuplot { static constexpr const char* cmd = "cat"; };
+#else
+struct Python  { static constexpr const char* cmd = "python"; };
 struct Gnuplot { static constexpr const char* cmd = "gnuplot"; };
-// struct Gnuplot { static constexpr const char* cmd = "cat"; };
-struct Python     { static constexpr const char* cmd = "python"; };
-// struct Python     { static constexpr const char* cmd = "cat"; };
+#endif
+
 
 template <typename T>
 class Subprocess
@@ -93,28 +101,29 @@ public:
     Subprocess() {
         // Open a new pipe
         if (pipe(filedes_) == -1) {
-            std::cout << "pipe() returned with error" << std::endl;
+            std::cerr << "pipe() returned with error" << std::endl;
         }
 
         // Fork process
         if (!(file_ = popen(T::cmd, "w"))) {
-            std::cout << "popen returned with error" << std::endl;
+            std::cerr << "popen returned with error" << std::endl;
             assert(false);  // todo
         }
 
         // Close unused read end on this process
         if (close(filedes_[0]) == -1)
-            std::cout << "error closing filedes[0]" << std::endl;
+            std::cerr << "error closing filedes[0]" << std::endl;
 
         cfout_ = std::make_unique<cf_ostream>(file_);
         fdout_ = std::make_unique<fd_ostream>(filedes_[1]);
 
-        std::cout << "Pipe opened with read end " << filedes_[0] << " and write end " << filedes_[1] << std::endl;
+        // std::clog << "Pipe opened with read end " << filedes_[0]
+        //           << " and write end " << filedes_[1] << std::endl;
     }
     ~Subprocess() {
         // Close 'data' pipe
         if (close(filedes_[1]) == -1)
-            std::cout << "close(filedes_[1]) returned with error" << std::endl;
+            std::cerr << "close(filedes_[1]) returned with error" << std::endl;
 
         // Close process
         pclose(file_);
