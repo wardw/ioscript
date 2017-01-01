@@ -16,7 +16,7 @@ using PlotStyles = std::unordered_map<size_t, std::any>;
 
 // Specializations in client code
 template <typename T> struct associated_styles;
-template <typename T> struct style_variant;
+template <typename T> struct has_styles;
 
 template <typename T>
 struct Styles;
@@ -77,7 +77,7 @@ public:
         // using StyleVariant = typename associated_styles<T>::type::supported_styles;
         // auto styleVar = std::any_cast<StyleVariant>(plotStyles_[key]);
 
-        constexpr size_t key = tuple_contains_type<typename style_variant<T>::type, typename Styles<S>::tuple>::value;
+        constexpr size_t key = tuple_contains_type<typename has_styles<T>::type, typename Styles<S>::tuple>::value;
         auto styleVar = std::get<key>(styles_.t);
 
 		// Plot this object

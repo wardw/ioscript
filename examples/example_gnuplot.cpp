@@ -126,7 +126,7 @@ using Scalar2D = std::variant<HeatMap, NumberGrid, ContourPlot>;
 
 template <> struct Styles<void> { using tuple = std::tuple<Scalar2D>; tuple t; };
 
-template <> struct style_variant<Array2d> { using type = Scalar2D; };
+template <> struct has_styles<Array2d> { using type = Scalar2D; };
 
 void example_gnuplot()
 {

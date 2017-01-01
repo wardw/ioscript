@@ -124,8 +124,8 @@ struct Show {
 
 using Data1D = std::variant<LineChart,BarChart>;
 
-template <> struct style_variant<std::vector<int>>  { using type = Data1D; };
-template <> struct style_variant<std::map<int,int>> { using type = Data1D; };
+template <> struct has_styles<std::vector<int>>  { using type = Data1D; };
+template <> struct has_styles<std::map<int,int>> { using type = Data1D; };
 
 template <> struct Styles<void> { using tuple = std::tuple<Data1D>; tuple t; };
 
