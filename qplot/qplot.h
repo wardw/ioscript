@@ -14,21 +14,20 @@
 using PlotStyles = std::unordered_map<size_t, std::any>;
 // using PlotStyles = std::array<std::any, MAX_STYLES>;
 
-// Specializations in client code
-template <typename T> struct associated_styles;
+// With specializations in client code
 template <typename T> struct has_styles;
 
-template <typename T>
-struct Styles;
+// template <typename T>
+// struct Styles;
 
-template <typename P, typename S = void>
+template <typename P, typename S>
 class Qplot
 {
     std::unique_ptr<Subprocess<P>> subprocess_;
     std::ostringstream header_;
 
     PlotStyles plotStyles_;
-    Styles<S> styles_;
+    S styles_;
 
 public:
     template <typename... Ts>
@@ -56,9 +55,8 @@ public:
     {
         // Nothing to plot now, but update our styles_ with this style where variants that support it
 
-        using StyleTuple = typename Styles<S>::tuple;
-        constexpr size_t NumStyles = std::tuple_size_v<StyleTuple>;
-        TupleUpdater<T, StyleTuple, NumStyles>::update(styles_.t, style);
+        constexpr size_t NumStyles = std::tuple_size_v<S>;
+        TupleUpdater<T, S, NumStyles>::update(styles_, style);
 
         processArgs(args...);
     }
@@ -70,8 +68,8 @@ public:
     void processArgs(const T& obj, const Ts&... args)
     {
 		// Get the style variant that's currently associated with the arg type T
-        constexpr size_t key = tuple_contains_type<typename has_styles<T>::type, typename Styles<S>::tuple>::value;
-        auto styleVar = std::get<key>(styles_.t);
+        constexpr size_t key = tuple_contains_type<typename has_styles<T>::type, S>::value;
+        auto styleVar = std::get<key>(styles_);
 
 		// Plot this object
 		std::visit([this,&obj](auto&& style) {

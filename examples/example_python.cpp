@@ -119,8 +119,8 @@ using Data1D = std::variant<LineChart,BarChart>;
 template <> struct has_styles<std::vector<int>>  { using type = Data1D; };
 template <> struct has_styles<std::map<int,int>> { using type = Data1D; };
 
-template <> struct Styles<void> { using tuple = std::tuple<Data1D>; tuple t; };
-
+using MyStyles = std::tuple<Data1D>;
+using Qp = Qplot<Python,MyStyles>;
 
 void example_python()
 {
@@ -142,8 +142,8 @@ void example_python()
 		n++;
 	}
 
-	Qplot<Python> qp(Header{});
-    qp.plot(LineChart(), vals1, vals2, Show());
+	Qp qp(Header{});
+    qp.plot(vals1, vals2, Show());  // LineChart is automatically the default (the first variant alternative)
     qp.plot(BarChart{}, NumPlots{2}, vals1, vals2, Show{});
     qp.plot(LineChart{}, vals2, BarChart{}, NumPlots{1}, vals1, Show{});
 
