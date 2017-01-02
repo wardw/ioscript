@@ -71,6 +71,16 @@ private:
     FILE* file_;
 };
 
+struct cf_ostream : public std::ostream
+{
+    cf_ostream(FILE* file) : std::ostream(0), buffer_(file) {
+        rdbuf(&buffer_);
+    }
+
+protected:
+    cf_outbuffer buffer_;
+};
+
 struct Null    { static constexpr const char* cmd = "cat > /dev/null"; };
 struct Cat     { static constexpr const char* cmd = "cat"; };
 
@@ -84,10 +94,10 @@ struct Gnuplot { static constexpr const char* cmd = "gnuplot"; };
 
 
 template <typename T>
-class Subprocess : public std::ostream
+class Subprocess
 {
 public:
-    Subprocess() : std::ostream(0) {
+    Subprocess() {
         // Open a new pipe
         if (pipe(filedes_) == -1) {
             std::cerr << "pipe() returned with error" << std::endl;
@@ -103,10 +113,7 @@ public:
         if (close(filedes_[0]) == -1)
             std::cerr << "error closing filedes[0]" << std::endl;
 
-        buffer_ = std::make_unique<cf_outbuffer>(file_);
-        rdbuf(&*buffer_);
-
-        // cfout_ = std::make_unique<cf_ostream>(file_);
+        cfout_ = std::make_unique<cf_ostream>(file_);
         fdout_ = std::make_unique<fd_ostream>(filedes_[1]);
 
         // std::clog << "Pipe opened with read end " << filedes_[0]
@@ -121,25 +128,23 @@ public:
         pclose(file_);
     }
 
-    std::unique_ptr<cf_outbuffer> buffer_;
-
-    // template <typename U>
-    // friend Subprocess& operator<<(Subprocess& process, const U& obj) {
-    //     *process.cfout_ << obj;
-    //     return process;
-    // }
+    template <typename U>
+    friend Subprocess& operator<<(Subprocess& process, const U& obj) {
+        *process.cfout_ << obj;
+        return process;
+    }
 
     Subprocess(const Subprocess&) = delete;
     Subprocess& operator=(const Subprocess&) = delete;
 
-    // cf_ostream& cfout() { return *cfout_; }
+    cf_ostream& cfout() { return *cfout_; }
     fd_ostream& fdout() { return *fdout_; }
 
     int fd_r() { return filedes_[0]; }
     int fd_w() { return filedes_[1]; }
 
 private:
-    // std::unique_ptr<cf_ostream> cfout_;
+    std::unique_ptr<cf_ostream> cfout_;
     std::unique_ptr<fd_ostream> fdout_;
 
     int filedes_[2];
