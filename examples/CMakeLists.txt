@@ -14,6 +14,7 @@ set(src "main.cpp"
 	    "example_python.cpp"
 	    "example_gnuplot.cpp"
 	    "example_process.cpp"
+	    "example_readme.cpp"
 	    "test.cpp"
 	    )
 
