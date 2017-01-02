@@ -2,12 +2,15 @@
 
 #include <ostream>
 #include <sstream>
-#include <unordered_map>
 #include <tuple>
 #include <type_traits>
 
 // Enable this macro definition to send all output to stdout in exactly the form as if sent to the subprocess
 // #define QPLOT_DEBUG
+
+// Enable this macro definition to use boost/variant instead of C++17 std::variant
+// #define WITH_BOOST_VARIANT
+
 
 #ifdef WITH_BOOST_VARIANT
     #include <boost/variant.hpp>

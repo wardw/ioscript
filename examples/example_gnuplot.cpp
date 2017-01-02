@@ -1,5 +1,6 @@
 #include <tuple>
 #include <array>
+#include <cmath>
 
 #include "qplot/qplot.h"
 
