@@ -175,8 +175,8 @@ public:
     void addToHeader(const Ts&... args)
     {
         // Everything to cfout goes to our local ostringstream
-        auto cout_buffer = subprocess_->cfout().rdbuf();
-        subprocess_->cfout().rdbuf(header_.rdbuf());
+        auto cout_buffer = subprocess_->rdbuf();
+        subprocess_->rdbuf(header_.rdbuf());
 
         // Also save the state of the chosen alternatives
         stylesHeader_ = styles_;
@@ -185,7 +185,7 @@ public:
         processArgs(args...);
 
         // Swap back
-        subprocess_->cfout().rdbuf(cout_buffer);
+        subprocess_->rdbuf(cout_buffer);
     }
 
     // cf_ostream& cfout() { return *cfout_; }
