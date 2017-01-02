@@ -128,17 +128,17 @@ public:
         pclose(file_);
     }
 
-    template <typename U>
-    friend Subprocess& operator<<(Subprocess& process, const U& obj) {
-        *process.cfout_ << obj;
-        return process;
-    }
+    // template <typename U>
+    // friend Subprocess& operator<<(Subprocess& process, const U& obj) {
+    //     *process.cfout_ << obj;
+    //     return process;
+    // }
 
     Subprocess(const Subprocess&) = delete;
     Subprocess& operator=(const Subprocess&) = delete;
 
-    cf_ostream& cfout() { return *cfout_; }
-    fd_ostream& fdout() { return *fdout_; }
+    cf_ostream& out()      { return *cfout_; }
+    fd_ostream& data_out() { return *fdout_; }
 
     int fd_r() { return filedes_[0]; }
     int fd_w() { return filedes_[1]; }

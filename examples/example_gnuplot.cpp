@@ -20,10 +20,10 @@ void sendData(Subprocess<Gnuplot>& gnuplot, const MyArray& arr)
     {
         for (int j=0; j<arr[0].size(); j++)
         {
-            gnuplot << i << " " << j << " " << arr[i][j] << '\n';
+            gnuplot.out() << i << " " << j << " " << arr[i][j] << '\n';
         }
     }
-    gnuplot << "e\n";  // 'e' is Gnuplot's terminating character
+    gnuplot.out() << "e\n";  // 'e' is Gnuplot's terminating character
 }
 
 struct HeatMap
@@ -31,7 +31,7 @@ struct HeatMap
 	template<typename T>
 	void operator()(Subprocess<Gnuplot>& gnuplot, const T& obj) const
 	{
-    	gnuplot <<  "plot '-' using 1:2:3 with image\n";
+    	gnuplot.out() <<  "plot '-' using 1:2:3 with image\n";
         sendData(gnuplot, obj);
 	}
 };
@@ -41,9 +41,10 @@ struct NumberGrid
 	template<typename T>
 	void operator()(Subprocess<Gnuplot>& gnuplot, const T& obj) const
 	{
-    	gnuplot <<  "plot '-' using 1:2:3 with image"
-    	        <<     ", '-' using 1:2:3 with labels font \"PTMono,8\""
-                << '\n';
+    	gnuplot.out()
+            <<  "plot '-' using 1:2:3 with image"
+            <<     ", '-' using 1:2:3 with labels font \"PTMono,8\""
+            << '\n';
 
         // Gnuplot requires the data is resent for additional plots
         sendData(gnuplot, obj);
@@ -56,13 +57,14 @@ struct ContourPlot
     template<typename T>
     void operator()(Subprocess<Gnuplot>& gnuplot, const T& obj) const
     {
-        gnuplot << "set dgrid3d " << SIZE_M << ", " << SIZE_N << "\n"
-                << "set contour surface\n"
-                << "splot '-' using 1:2:3 with lines linetype 2 linewidth 1\n";
+        gnuplot.out()
+            << "set dgrid3d " << SIZE_M << ", " << SIZE_N << "\n"
+            << "set contour surface\n"
+            << "splot '-' using 1:2:3 with lines linetype 2 linewidth 1\n";
 
         sendData(gnuplot, obj);
 
-        gnuplot << "unset contour\n"
+        gnuplot.out() << "unset contour\n"
                 << "unset dgrid3d\n";
     }
 };
@@ -70,15 +72,16 @@ struct ContourPlot
 struct Header
 {
     void operator()(Subprocess<Gnuplot>& gnuplot) const {
-        gnuplot << "set terminal png size 640, 480\n"
-                << "set output 'output.png'\n";
+        gnuplot.out()
+            << "set terminal png size 640, 480\n"
+            << "set output 'output.png'\n";
     }
 };
 
 struct Filename
 {
     void operator()(Subprocess<Gnuplot>& gnuplot) const {
-        gnuplot << "set output '" << filename << ".png'\n";
+        gnuplot.out() << "set output '" << filename << ".png'\n";
     }
     std::string filename = "output.png";
 };
@@ -86,7 +89,7 @@ struct Filename
 struct ImageSize
 {
     void operator()(Subprocess<Gnuplot>& gnuplot) const {
-        gnuplot << "set terminal png size " << size_x << ", " << size_y << "\n";
+        gnuplot.out() << "set terminal png size " << size_x << ", " << size_y << "\n";
     }
     unsigned size_x = 640;
     unsigned size_y = 480;
@@ -105,9 +108,9 @@ struct Colours
     void operator()(Subprocess<Gnuplot>& gnuplot) const {
         switch (palette)
         {
-            case OCEAN:    gnuplot << "set palette rgbformulae 23,28,3 \n";  break;
-            case RAINBOW:  gnuplot << "set palette rgbformulae 33,13,10\n";  break;
-            case HOT:      gnuplot << "set palette rgbformulae 21,22,23\n";  break;
+            case OCEAN:    gnuplot.out() << "set palette rgbformulae 23,28,3 \n";  break;
+            case RAINBOW:  gnuplot.out() << "set palette rgbformulae 33,13,10\n";  break;
+            case HOT:      gnuplot.out() << "set palette rgbformulae 21,22,23\n";  break;
         }
     }
 

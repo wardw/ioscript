@@ -9,7 +9,7 @@ using namespace qp;
 struct Header
 {
 	void operator()(Subprocess<Python>& python) const {
-		python << "import matplotlib.pyplot as plt" << '\n';
+		python.out() << "import matplotlib.pyplot as plt" << '\n';
 	}
 };
 
@@ -17,27 +17,27 @@ void sendData(Subprocess<Python>& python, const std::vector<int>& obj)
 {
 	// Just send a line each for x and y that matches our python read
     for (int i=0; i<obj.size(); i++) {
-		python.fdout() << i << ' ';
+		python.data_out() << i << ' ';
 	}
-	python.fdout() << endl;
+	python.data_out() << endl;
 
 	for (int i=0; i<obj.size(); i++) {
-		python.fdout() << obj[i] << ' ';
+		python.data_out() << obj[i] << ' ';
 	}
-	python.fdout() << endl;
+	python.data_out() << endl;
 }
 
 void sendData(Subprocess<Python>& python, const std::map<int,int>& obj)
 {
     for (auto elem : obj) {
-		python.fdout() << elem.first << ' ';
+		python.data_out() << elem.first << ' ';
 	}
-	python.fdout() << endl;
+	python.data_out() << endl;
 
 	for (auto elem : obj) {
-		python.fdout() << elem.second << ' ';
+		python.data_out() << elem.second << ' ';
 	}
-	python.fdout() << endl;
+	python.data_out() << endl;
 }
 
 struct LineChart
@@ -48,7 +48,7 @@ struct LineChart
 	template <typename T>
 	void operator()(Subprocess<Python>& python, const T& obj) const
 	{
-        python <<
+        python.out() <<
 R"(
 x = map(int, fo.readline().split())
 y = map(int, fo.readline().split())
@@ -70,16 +70,17 @@ struct BarChart
 
 	void operator()(Subprocess<Python>& python) const
 	{
-		python << "numPlots = " << numPlots << '\n'
-			   << "assert numPlots < 7" << '\n'
-			   << "cols = ['b', 'g', 'r', 'c', 'm', 'y', 'k']" << '\n'
-		       << "plotNum = 0" << '\n';
+		python.out()
+			<< "numPlots = " << numPlots << '\n'
+			<< "assert numPlots < 7" << '\n'
+			<< "cols = ['b', 'g', 'r', 'c', 'm', 'y', 'k']" << '\n'
+			<< "plotNum = 0" << '\n';
 	}
 
 	template <typename T>
 	void operator()(Subprocess<Python>& python, const T& obj) const
 	{
-        python <<
+        python.out() <<
 R"(
 x = map(int, fo.readline().split())
 y = map(int, fo.readline().split())
@@ -96,7 +97,7 @@ plotNum += 1
 };
 
 struct Show {
-	void operator()(Subprocess<Python>& python) const { python << "plt.show()\n"; }
+	void operator()(Subprocess<Python>& python) const { python.out() << "plt.show()\n"; }
 };
 
 
@@ -136,7 +137,7 @@ void example_python()
 
     // Or use a lambda
 	qp.plot(LineChart{}, vals2, [](Subprocess<Python>& py) {
-        py << "plt.savefig('vals2.png')" << '\n';
+        py.out() << "plt.savefig('vals2.png')" << '\n';
     });
 }
 

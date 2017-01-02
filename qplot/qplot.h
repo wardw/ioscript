@@ -53,11 +53,12 @@ struct has_styles;
 struct PythonHeader
 {
     void operator()(Subprocess<Python>& python) const {
-        python << "# This header has been added by Qplot. See qplot.h\n"
-               << "import os\n"
-               << "os.close(" << python.fd_w() << ")\n"
-               << "fo = os.fdopen(" << python.fd_r() << ", 'r')\n"
-               << "\n";
+        python.out()
+            << "# This header has been added by Qplot. See qplot.h\n"
+            << "import os\n"
+            << "os.close(" << python.fd_w() << ")\n"
+            << "fo = os.fdopen(" << python.fd_r() << ", 'r')\n"
+            << "\n";
     }
 };
 
@@ -87,6 +88,9 @@ class Qplot
     S stylesHeader_;
 
 public:
+    using process = P;
+    using styles = S;
+
     template <typename... Ts>
     Qplot(Ts&&... args) :
         subprocess_(std::make_unique<Subprocess<P>>())
@@ -156,7 +160,7 @@ public:
 	void plot(const Ts&... args)
 	{
         // Replay the header
-        *this << header_.str();
+        subprocess_->out() << header_.str();
 
         // Reload state for the chosen alternatives
         styles_ = stylesHeader_;
@@ -175,8 +179,8 @@ public:
     void addToHeader(const Ts&... args)
     {
         // Everything to cfout goes to our local ostringstream
-        auto cout_buffer = subprocess_->cfout().rdbuf();
-        subprocess_->cfout().rdbuf(header_.rdbuf());
+        auto cout_buffer = subprocess_->out().rdbuf();
+        subprocess_->out().rdbuf(header_.rdbuf());
 
         // Also save the state of the chosen alternatives
         stylesHeader_ = styles_;
@@ -185,21 +189,14 @@ public:
         processArgs(args...);
 
         // Swap back
-        subprocess_->cfout().rdbuf(cout_buffer);
+        subprocess_->out().rdbuf(cout_buffer);
     }
 
-    // cf_ostream& cfout() { return *cfout_; }
-    fd_ostream& fdout() { return subprocess_->fdout(); }
+    // cf_ostream& out()      { return subprocess_->out(); }
+    // fd_ostream& data_out() { return subprocess_->data_out(); }
 
-    int fd_r() { return subprocess_->fd_r(); }
-    int fd_w() { return subprocess_->fd_w(); }
-
-    template <typename U>
-    friend Qplot& operator<<(Qplot& qplot, const U& str)
-    {
-        *qplot.subprocess_ << str;
-        return qplot;
-    }
+    // int fd_r() { return subprocess_->fd_r(); }
+    // int fd_w() { return subprocess_->fd_w(); }
 };
 
 } // namespace qp
