@@ -9,7 +9,7 @@ using namespace qp;
 struct Header
 {
 	void operator()(Subprocess<Python>& python) const {
-		python.out() << "import matplotlib.pyplot as plt" << '\n';
+		python << "import matplotlib.pyplot as plt" << endl;
 	}
 };
 
@@ -48,14 +48,14 @@ struct LineChart
 	template <typename T>
 	void operator()(Subprocess<Python>& python, const T& obj) const
 	{
-        python.out() <<
+        python <<
 R"(
-x = map(int, fo.readline().split())
-y = map(int, fo.readline().split())
+x = map(int, qp_data_in.readline().split())
+y = map(int, qp_data_in.readline().split())
 
 plt.plot(x, y, 'o-')
 plt.plot(x, y, 'o-')
-)" << "\n";
+)" << endl;
 
 		sendData(python, obj);
 	}
@@ -70,34 +70,34 @@ struct BarChart
 
 	void operator()(Subprocess<Python>& python) const
 	{
-		python.out()
+		python
 			<< "numPlots = " << numPlots << '\n'
-			<< "assert numPlots < 7" << '\n'
-			<< "cols = ['b', 'g', 'r', 'c', 'm', 'y', 'k']" << '\n'
-			<< "plotNum = 0" << '\n';
+			<< "assert numPlots < 7\n"
+			<< "cols = ['b', 'g', 'r', 'c', 'm', 'y', 'k']\n"
+			<< "plotNum = 0\n";
 	}
 
 	template <typename T>
 	void operator()(Subprocess<Python>& python, const T& obj) const
 	{
-        python.out() <<
+        python <<
 R"(
-x = map(int, fo.readline().split())
-y = map(int, fo.readline().split())
+x = map(int, qp_data_in.readline().split())
+y = map(int, qp_data_in.readline().split())
 
 width = 1.0/numPlots
 xPos = plotNum * width
 
 plt.bar([a+xPos for a in x], y, width-0.1, color=cols[plotNum])
 plotNum += 1
-)" << "\n";
+)" << endl;
 
 		sendData(python, obj);
 	}
 };
 
 struct Show {
-	void operator()(Subprocess<Python>& python) const { python.out() << "plt.show()\n"; }
+	void operator()(Subprocess<Python>& python) const { python << "plt.show()\n"; }
 };
 
 
@@ -137,7 +137,7 @@ void example_python()
 
     // Or use a lambda
 	qp.plot(LineChart{}, vals2, [](Subprocess<Python>& py) {
-        py.out() << "plt.savefig('vals2.png')" << '\n';
+        py << "plt.savefig('vals2.png')\n";
     });
 }
 

@@ -128,11 +128,30 @@ public:
         pclose(file_);
     }
 
-    // template <typename U>
-    // friend Subprocess& operator<<(Subprocess& process, const U& obj) {
-    //     *process.cfout_ << obj;
-    //     return process;
-    // }
+    template <typename U>
+    friend Subprocess& operator<<(Subprocess& process, U&& rhs) {
+        *process.cfout_ << std::forward<U>(rhs);
+        return process;
+    }
+
+    // Manipulators are also templates, so write non-template overloads (three types)
+    using m1 = std::ostream&(*)(std::ostream&);
+    using m2 = std::basic_ios<std::ostream::char_type,std::ostream::traits_type>&
+                    (*)(std::basic_ios<std::ostream::char_type,std::ostream::traits_type>&);
+    using m3 = std::ios_base&(*)(std::ios_base&);
+
+    friend Subprocess& operator<<(Subprocess& process, m1 rhs) {
+        *process.cfout_ << rhs;
+        return process;
+    }
+    friend Subprocess& operator<<(Subprocess& process, m2 rhs) {
+        *process.cfout_ << rhs;
+        return process;
+    }
+    friend Subprocess& operator<<(Subprocess& process, m3 rhs) {
+        *process.cfout_ << rhs;
+        return process;
+    }
 
     Subprocess(const Subprocess&) = delete;
     Subprocess& operator=(const Subprocess&) = delete;

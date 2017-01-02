@@ -57,7 +57,7 @@ struct PythonHeader
             << "# This header has been added by Qplot. See qplot.h\n"
             << "import os\n"
             << "os.close(" << python.fd_w() << ")\n"
-            << "fo = os.fdopen(" << python.fd_r() << ", 'r')\n"
+            << "qp_data_in = os.fdopen(" << python.fd_r() << ", 'r')\n"
             << "\n";
     }
 };
