@@ -156,46 +156,30 @@ struct Show {
 	void operator()(Subprocess<Python>& python) const { python << "plt.show()\n"; }
 };
 
-// Original
-// using Data1Col    = variant<LineChart,ScatterPlot>;
-// using Data2Col    = variant<LineChart,BarChart>;
-// using ScatterData = variant<ScatterPlot>;
+// These maps our data types to the relevant code snippet 'styles' they may be called with
+template <typename T>
+struct has_styles<std::vector<T>>     { using type = variant<LineChart,ScatterPlot>; };
 
-// // This maps our data types to the relevant code snippet 'styles' they may be called with
-// template <typename T> struct has_styles<std::vector<T>>     { using type = Data1Col; };
-// template <>           struct has_styles<std::map<int,int>>  { using type = Data2Col; };
-// template <>           struct has_styles<std::vector<Point>> { using type = ScatterData; };
+template <>
+struct has_styles<std::map<int,int>>  { using type = variant<LineChart,BarChart>; };
 
-// using MyStyles = std::tuple<Data1Col,Data2Col,ScatterData>;
+template <>
+struct has_styles<std::vector<Point>> { using type = variant<ScatterPlot>; };
 
-
-// This maps our data types to the relevant code snippet 'styles' they may be called with
-template <typename T> struct has_styles<std::vector<T>>     { using type = variant<LineChart,ScatterPlot>; };
-template <>           struct has_styles<std::map<int,int>>  { using type = variant<LineChart,BarChart>; };
-template <>           struct has_styles<std::vector<Point>> { using type = variant<ScatterPlot>; };
-
-// Housekeeping. This sucks.
-using MyStyles = std::tuple<has_styles<vector<void>>::type,
-                            has_styles<map<int,int>>::type,
-                            has_styles<vector<Point>>::type>;
-
-// Aim (next)
-using MyTypes = std::tuple<vector<int>,vector<float>,map<int,int>,vector<Point>>;
-
-
-// Or cheat
-// But one requirement is that for any data object T that relates a set of 'style' variants (BarChart, LineChart etc), each
-// alternative must implement operator()(Subprocess<P>&, T obj) for each possible T regardless of which alternative
-// is the current chosen alternative. (Extends from the rules of std::variant)
+// Or cheat - associate all types to all styles - just take care to make sure every style
+// defines operator() for every type (which it must regardless of the current value of the variant)
 // using AllStyles = variant<LineChart,BarChart,ScatterPlot>;
-// template <typename T> struct qp::has_styles { using type = AllStyles; };
-// using MyStyles = std::tuple<AllStyles>;
+// template <typename T>
+// struct qp::has_styles { using type = AllStyles; };
 
 
-using Qp = Qplot<Python,MyStyles>;
+using MyTypes = std::tuple<vector<int>,map<int,int>,vector<Point>>;
+using Qp = Qplot<Python,MyTypes>;
 
 void example_python()
 {
+	cout << "MyTypes: " << objName(styles_from_types<MyTypes>{}) << endl;
+
 	std::default_random_engine gen;
 
 	std::uniform_int_distribution<> uniform_int(0,10);
@@ -250,3 +234,7 @@ void example_python()
  	// },
  	// Show{});
 }
+
+// But one requirement is that for any data object T that relates a set of 'style' variants (BarChart, LineChart etc), each
+// alternative must implement operator()(Subprocess<P>&, T obj) for each possible T regardless of which alternative
+// is the current chosen alternative. (Extends from the rules of std::variant)

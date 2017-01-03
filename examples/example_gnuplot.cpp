@@ -15,6 +15,7 @@ using Array2d = std::array<std::array<int, M>, N>;
 
 using MyArray = Array2d<SIZE_M,SIZE_N>;
 
+// By default Gnuplot takes data on stdin, expected after a `plot '-'` statement
 void sendData(Subprocess<Gnuplot>& gnuplot, const MyArray& arr)
 {
     for (int i=0; i<arr.size(); i++)
@@ -117,16 +118,15 @@ struct Colours
     Palette palette;
 };
 
-
 using Scalar2D = qp::variant<HeatMap, NumberGrid, ContourPlot>;
 
-template <> struct has_styles<MyArray> { using type = Scalar2D; };
-
 // Alternatively, associate 2d arrays of all sizes with our Scalar2D variant
+template <>                   struct has_styles<MyArray>      { using type = Scalar2D; };
 template <size_t M, size_t N> struct has_styles<Array2d<M,N>> { using type = Scalar2D; };
 
-using MyStyles = std::tuple<Scalar2D>;
-using Qp = Qplot<Gnuplot,MyStyles>;
+
+using MyTypes = std::tuple<MyArray>;
+using Qp = Qplot<Gnuplot,MyTypes>;
 
 void example_gnuplot()
 {

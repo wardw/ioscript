@@ -22,10 +22,9 @@ plt.plot(vals, 'o-')
     }
 };
 
-using Data1D = variant<LineChart>;
-using MyStyles = std::tuple<Data1D>;
+template <> struct has_styles<std::vector<int>> { using type = variant<LineChart>; };
 
-template <> struct has_styles<std::vector<int>> { using type = Data1D; };
+using MyTypes = std::tuple<std::vector<int>>;
 
 void example_readme()
 {
@@ -36,6 +35,6 @@ void example_readme()
         py << "plt.show()" << std::endl;
     };
 
-    qp::Qplot<Python,MyStyles> qp;
+    qp::Qplot<Python,MyTypes> qp;
     qp.plot(LineChart{}, series1, series2, show);
 }

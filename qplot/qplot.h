@@ -51,6 +51,25 @@ namespace qp {
 template <typename T>
 struct has_styles;
 
+
+// Map a tuple of `types...` to a tuple of `has_styles<types...>::type`
+// There's probably a cleaner way..
+struct foo { using type = void; };
+
+template <typename... Ts>
+struct get_styles;
+
+template <typename... Xs>
+struct get_styles<std::tuple<Xs...>, std::tuple<>> : foo { using type = std::tuple<Xs...>; };
+
+template <typename U, typename... Xs, typename... Ts>
+struct get_styles<std::tuple<Xs...>, std::tuple<U, Ts...>> : get_styles<std::tuple<Xs..., typename has_styles<U>::type>, std::tuple<Ts...>> {};
+
+template <typename Tuple>
+using styles_from_types = typename get_styles<std::tuple<>, Tuple>::type;
+
+
+
 // This adds an implementation detail necessary for all uses
 // For more information see the Subprocess section of README.md and examples_process.cpp
 struct PythonHeader
@@ -81,11 +100,13 @@ void addPrivateHeader(Qplot<Gnuplot,S>& python)
 {
 }
 
-template <typename P, typename S>
+template <typename P, typename X>
 class Qplot
 {
     std::unique_ptr<Subprocess<P>> subprocess_;
     std::ostringstream header_;
+
+    using S = styles_from_types<X>;
 
     S styles_;
     S stylesHeader_;

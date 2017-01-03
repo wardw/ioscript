@@ -1,7 +1,18 @@
 #pragma once
 
+#include <cxxabi.h>
+
 namespace qp {
 
+// Type info
+template <typename T>
+std::string objName(const T& obj)
+{
+    std::ostringstream os;
+    int info;
+    os << abi::__cxa_demangle(typeid(obj).name(),0,0,&info);
+    return os.str();
+}
 
 // Find wether a variant contains a given type
 
@@ -47,7 +58,6 @@ struct has_type<T, N, std::tuple<U, Ts...>> : has_type<T, N+1, std::tuple<Ts...>
 
 template <typename T, typename Tuple>
 using tuple_contains_type = typename has_type<T, 0, Tuple>::type;
-
 
 
 template <typename T>
