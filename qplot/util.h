@@ -14,7 +14,7 @@ struct has_type;
 
 // We've exhausted searching all variant elements - not found
 template <typename T, size_t N>
-struct has_type<T, N, variant<monostate>> : std::integral_constant<int,-1> {};
+struct has_type<T, N, variant<>> : std::integral_constant<int,-1> {};   // TODO: breaks with monostate when type isn't in the variant
 
 // A match: T matches the first T of the variant, now at position N
 template <typename T, size_t N, typename... Ts>
