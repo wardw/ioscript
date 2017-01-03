@@ -28,6 +28,15 @@ void sendData(Subprocess<Python>& python, const std::vector<int>& obj)
 	python.data_out() << endl;
 }
 
+template <size_t N>
+void sendData(Subprocess<Python>& python, const std::array<int,N>& obj)
+{
+	for (int i=0; i<obj.size(); i++) {
+		python.data_out() << obj[i] << ' ';
+	}
+	python.data_out() << endl;
+}
+
 void sendData(Subprocess<Python>& python, const std::vector<Point>& obj)
 {
 	for (auto elem : obj) {
@@ -117,6 +126,10 @@ xPos = plotNum * width
 plt.bar([a+xPos for a in x], y, width-0.1, color=cols[plotNum])
 plotNum += 1
 )";
+
+		// These examples mostly forward to `sendData` to do the right thing
+		// But types are first associated with the snippets they relate to,
+		// so there is the opportunity to handle specifically wrt the snippet
 		sendData(python, obj);
 	}
 };
@@ -144,6 +157,14 @@ plt.scatter(x, y, s=)" << pointSize << R"()
 	}
 };
 
+struct Title
+{
+	const char* title;
+	void operator()(Subprocess<Python>& python) const {
+		python << "plt.title(\"" << title << "\")\n";
+	}
+};
+
 struct Subplot
 {
 	int subplot;
@@ -156,24 +177,30 @@ struct Show {
 	void operator()(Subprocess<Python>& python) const { python << "plt.show()\n"; }
 };
 
-// These maps our data types to the relevant code snippet 'styles' they may be called with
+struct DefaultSnippet
+{
+	template <typename T>
+	void operator()(Subprocess<Python>& python, const T& obj) const {
+		clog << "Default snippet called, this obj hasn't been associated to any other snippet" << endl;
+	}
+};
+
+// Define this primary template to act as a 'default snippet' to match any type, useful if you
+// find you're repeating yourself a lot for common behaviour.  Any specializations below will
+// take precedence over this, as per C++'s template specialization rules
 template <typename T>
-struct has_styles<std::vector<T>>     { using type = variant<LineChart,ScatterPlot>; };
-
-template <>
-struct has_styles<std::map<int,int>>  { using type = variant<LineChart,BarChart>; };
-
-template <>
-struct has_styles<std::vector<Point>> { using type = variant<ScatterPlot>; };
-
-// Or cheat - associate all types to all styles - just take care to make sure every style
-// defines operator() for every type (which it must regardless of the current value of the variant)
-// using AllStyles = variant<LineChart,BarChart,ScatterPlot>;
-// template <typename T>
-// struct qp::has_styles { using type = AllStyles; };
+struct qp::has_styles { using type = variant<DefaultSnippet>; };
 
 
-using MyTypes = std::tuple<vector<int>,map<int,int>,vector<Point>>;
+// These maps our data types to the relevant code snippets they may be called with
+template <typename T> struct has_styles<std::vector<T>>      { using type = variant<LineChart,ScatterPlot>; };
+template <>           struct has_styles<std::map<int,int>>   { using type = variant<LineChart,BarChart>; };
+template <>           struct has_styles<std::vector<Point>>  { using type = variant<ScatterPlot>; };
+template <size_t N>   struct has_styles<std::array<int,N>>   { using type = variant<ScatterPlot>; };
+
+
+
+using MyTypes = std::tuple<vector<int>, map<int,int>, vector<Point>, array<int,0>, double>;
 using Qp = Qplot<Python,MyTypes>;
 
 void example_python()
@@ -203,13 +230,13 @@ void example_python()
 	Qp qp(Header{});
 
 	// LineChart is automatically the default as the first variant alternative
-    qp.plot(vals1, vals2, vals3, Show());
-    qp.plot(BarChart{2}, vals2, vals3, Show{});
-    qp.plot(BarChart{1}, vals2, LineChart{}, vals3, Show{});
+    qp.plot(Title{"Example 1"}, vals1, vals2, vals3, Show());
+    qp.plot(Title{"Example 2"}, BarChart{2}, vals2, vals3, Show{});
+    qp.plot(Title{"Example 3"}, BarChart{1}, vals2, LineChart{}, vals3, Show{});
 
     // Or use a lambda
-	qp.plot(LineChart{}, vals2, [](Subprocess<Python>& py) {
-        py << "plt.savefig('vals2.png')\n";
+	qp.plot(Title{"Example 4"}, LineChart{}, vals2, [](Subprocess<Python>& py) {
+        py << "plt.savefig('Example 4.png')\n";
     });
 
 
@@ -220,12 +247,18 @@ void example_python()
     	points[n].y = normal_dist(gen);
     	n++;
     }
- 	qp.plot(ScatterPlot{50}, points, Show{});
+ 	qp.plot(Title{"Example 5"}, ScatterPlot{50}, points, Show{});
 
 
-	std::vector<int> series1{1,1,2,3,5,8,13,21,34,55,89};
-	std::vector<int> series2{1,3,6,10,15,21,28,36,45,55,66};
-	qp.plot(Subplot{211}, ScatterPlot{50}, series1, series2, Subplot{212}, LineChart{}, series1, series2, Show{});
+	std::vector<int>   series1{1,1,2,3,5,8,13,21,34,55,89};
+	std::array<int,11> series2{1,3,6,10,15,21,28,36,45,55,66};
+	qp.plot(Subplot{211}, Title{"Example 6 (a)"}, ScatterPlot{50}, series1, series2,
+		    Subplot{212}, Title{"Example 6 (b)"}, LineChart{}, series1, series2,
+		    Show{});
+
+	// We've not added a mapping to associate a `double`. This will call our default snippet
+	qp.plot(42.f);
+
 
  	// But what if we don't want to use the default format? Then specify inline
  	// qp.plot(ScatterPlot{50}, [points](Subprocess<Python>& py) {
