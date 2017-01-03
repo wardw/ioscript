@@ -74,13 +74,20 @@ using styles_from_types = typename get_styles<std::tuple<>, Tuple>::type;
 // For more information see the Subprocess section of README.md and examples_process.cpp
 struct PythonHeader
 {
-    void operator()(Subprocess<Python>& python) const {
+    void operator()(Subprocess<Python>& python) const
+    {
         python.out()
             << "# This header has been added by Qplot. See qplot.h\n"
             << "import os\n"
-            << "os.close(" << python.fd_w() << ")\n"
-            << "qp_data_in = os.fdopen(" << python.fd_r() << ", 'r')\n"
+            << "qp_data_in = list()\n"
             << "\n";
+
+        for (int i=0; i<python.numChannels(); i++) {
+            python.out()
+                << "os.close(" << python.fd_w(i) << ")\n"
+                << "qp_data_in.append(os.fdopen(" << python.fd_r(i) << ", 'r'))\n"
+                << "\n";
+        }
     }
 };
 

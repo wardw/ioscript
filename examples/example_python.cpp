@@ -18,7 +18,7 @@ struct Header
 	}
 };
 
-// Define a basic set of functions to interpret our data types along meaningful dimesions of interest
+// Define a basic set of functions to interpret our data types along meaningful dimensions of interest
 // These examples use the convention that a line of data is a single dimension to python
 void sendData(Subprocess<Python>& python, const std::vector<int>& obj)
 {
@@ -63,7 +63,7 @@ void sendData(Subprocess<Python>& python, const std::map<int,int>& obj)
 	python.data_out() << endl;
 }
 
-// This exmample separates the plotting code depending on the data type.
+// This example separates the plotting code depending on the data type.
 // The usual rules for overloading apply.  Unfortunately you must always provide
 // the `const T&` version anyway, even if it does nothing (todo)
 struct LineChart
@@ -72,7 +72,7 @@ struct LineChart
 	{
         python <<
 R"(
-x = map(int, qp_data_in.readline().split())
+x = map(int, qp_data_in[0].readline().split())
 plt.plot(x, 'o-')
 )";
 		sendData(python, obj);
@@ -83,8 +83,8 @@ plt.plot(x, 'o-')
 	{
         python <<
 R"(
-x = map(int, qp_data_in.readline().split())
-y = map(int, qp_data_in.readline().split())
+x = map(int, qp_data_in[0].readline().split())
+y = map(int, qp_data_in[0].readline().split())
 plt.plot(x, y, 'o-')
 )";
 		sendData(python, obj);
@@ -117,8 +117,8 @@ plotNum = 0
 	{
         python <<
 R"(
-x = map(int, qp_data_in.readline().split())
-y = map(int, qp_data_in.readline().split())
+x = map(int, qp_data_in[0].readline().split())
+y = map(int, qp_data_in[0].readline().split())
 
 width = 1.0/numPlots
 xPos = plotNum * width
@@ -145,8 +145,8 @@ struct ScatterPlot
 	{
         python <<
 R"(
-x = map(float, qp_data_in.readline().split())
-y = map(float, qp_data_in.readline().split())
+x = map(float, qp_data_in[0].readline().split())
+y = map(float, qp_data_in[0].readline().split())
 plt.scatter(x, y, s=)" << pointSize << R"()
 )";
 	}
@@ -201,7 +201,7 @@ template <size_t N>   struct has_styles<std::array<int,N>>   { using type = vari
 
 
 using MyTypes = std::tuple<vector<int>, map<int,int>, vector<Point>, array<int,0>, double>;
-using Qp = Qplot<Python,MyTypes>;
+using QpPython = Qplot<Python,MyTypes>;
 
 void example_python()
 {
@@ -227,7 +227,7 @@ void example_python()
 		n++;
 	}
 
-	Qp qp(Header{});
+	QpPython qp(Header{});
 
 	// LineChart is automatically the default as the first variant alternative
     qp.plot(Title{"Example 1"}, vals1, vals2, vals3, Show());

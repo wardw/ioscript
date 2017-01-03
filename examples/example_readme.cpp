@@ -10,7 +10,7 @@ struct LineChart {
         python << R"(
 import matplotlib.pyplot as plt
 
-vals = map(int, qp_data_in.readline().split())
+vals = map(int, qp_data_in[0].readline().split())
 plt.plot(vals, 'o-')
 )" << std::endl;
 
@@ -42,5 +42,5 @@ void example_readme()
     };
 
     qp::Qplot<Python,MyTypes> qp;
-    qp.plot(Title{"Readme example"}, LineChart{}, series1, series2, show);
+    qp.plot(LineChart{}, series1, series2, Title{"Readme example"}, show);
 }

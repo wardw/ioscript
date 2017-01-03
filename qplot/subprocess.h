@@ -5,6 +5,7 @@
 #include <cstdio>
 #include <cassert>
 #include <unistd.h>  // for write
+#include <vector>
 
 namespace qp {
 
@@ -96,10 +97,25 @@ template <typename T>
 class Subprocess
 {
 public:
-    Subprocess() {
-        // Open a new pipe
-        if (pipe(filedes_) == -1) {
-            std::cerr << "pipe() returned with error" << std::endl;
+    Subprocess(unsigned numChannels=1)
+    {
+        assert(numChannels < 1024); // todo
+
+        // Open data pipes
+        for (unsigned i=0; i<numChannels; i++)
+        {
+            int filedes[2];
+            if (pipe(filedes) == -1) {
+                std::cerr << "pipe() returned with error" << std::endl;
+                assert(false);
+            }
+            channels_.push_back({filedes[0], filedes[1]});
+        }
+
+        // Wrap new fd_w in fd_ostream
+        for (unsigned i=0; i<numChannels; i++)
+        {
+            fdout_.push_back(std::make_unique<fd_ostream>(channels_[i].fd_w));
         }
 
         // Fork process
@@ -108,23 +124,32 @@ public:
             assert(false);  // todo
         }
 
-        // Close unused read end on this process
-        if (close(filedes_[0]) == -1)
-            std::cerr << "error closing filedes[0]" << std::endl;
-
         cfout_ = std::make_unique<cf_ostream>(file_);
-        fdout_ = std::make_unique<fd_ostream>(filedes_[1]);
+
+        // Close unused read ends on this process
+        for (unsigned i=0; i<numChannels; i++)
+        {
+            if (close(channels_[i].fd_r) == -1)
+                std::cerr << "error closing (read) file descriptor "
+                          << channels_[i].fd_r << " on channel " << i << std::endl;
+        }
 
         // std::clog << "Pipe opened with read end " << filedes_[0]
         //           << " and write end " << filedes_[1] << std::endl;
     }
     ~Subprocess() {
         // Close 'data' pipe
-        if (close(filedes_[1]) == -1)
-            std::cerr << "close(filedes_[1]) returned with error" << std::endl;
+        for (unsigned i=0; i<channels_.size(); i++)
+        {
+            if (close(channels_[i].fd_w) == -1) {
+                std::cerr << "error closing (write) file descriptor "
+                          << channels_[i].fd_w << " on channel " << i << std::endl;
+                assert(false);
+            }
+        }
 
         // Close process
-        pclose(file_);
+        std::cout << "pclose returned: " << pclose(file_) << std::endl;
     }
 
     template <typename U>
@@ -155,17 +180,36 @@ public:
     Subprocess(const Subprocess&) = delete;
     Subprocess& operator=(const Subprocess&) = delete;
 
-    cf_ostream& out()      { return *cfout_; }
-    fd_ostream& data_out() { return *fdout_; }
+    cf_ostream& out()  { return *cfout_; }
+    fd_ostream& data_out(unsigned channel=0) {
+        if (channel >= channels_.size())
+            assert(false); // todo
+        return *fdout_[channel];
+    }
 
-    int fd_r() { return filedes_[0]; }
-    int fd_w() { return filedes_[1]; }
+    unsigned numChannels() { return channels_.size(); }
+
+    int fd_r(unsigned channel=0) {
+        if (channel >= channels_.size())
+            assert(false);
+        return channels_[channel].fd_r;
+    }
+    int fd_w(unsigned channel=0) {
+        if (channel >= channels_.size())
+            assert(false);
+        return channels_[channel].fd_w;
+    }
 
 private:
     std::unique_ptr<cf_ostream> cfout_;
-    std::unique_ptr<fd_ostream> fdout_;
+    std::vector<std::unique_ptr<fd_ostream>> fdout_;
 
-    int filedes_[2];
+    struct Fd {
+        int fd_r;
+        int fd_w;
+    };
+
+    std::vector<Fd> channels_;
     FILE* file_;
 };
 
