@@ -64,11 +64,36 @@ template <typename... Xs>
 struct get_styles<std::tuple<Xs...>, std::tuple<>> : foo { using type = std::tuple<Xs...>; };
 
 template <typename U, typename... Xs, typename... Ts>
-struct get_styles<std::tuple<Xs...>, std::tuple<U, Ts...>> : get_styles<std::tuple<Xs..., typename has_styles<U>::type>, std::tuple<Ts...>> {};
+struct get_styles<std::tuple<Xs...>, std::tuple<U, Ts...>> : get_styles<std::tuple<Xs...,typename has_styles<U>::type>, std::tuple<Ts...>> {};
 
 template <typename Tuple>
-using styles_from_types = typename get_styles<std::tuple<>, Tuple>::type;
+using styles_from_types = get_styles<std::tuple<>, Tuple>;
 
+
+// Check that the given type refers to a variant with at least one style
+
+template <typename T, typename U = void>
+struct has_related_style {
+    static constexpr bool value = false;
+};
+
+template <typename T>
+struct has_related_style<T, std::enable_if_t<std::variant_size_v<typename has_styles<T>::type> != 0>> {
+    static constexpr bool value = true;
+};
+
+template <typename... Ts>
+struct check_tuple;
+
+template <>
+struct check_tuple<std::tuple<>> : std::true_type{};
+
+template <typename T, typename... Ts>
+struct check_tuple<std::tuple<T, Ts...>> : check_tuple<std::tuple<Ts...>> {
+    static_assert(has_related_style<T>::value, "A type T has been added to 'MyTypes' that does not refer to any style variant. "
+                                               "Add a specialization `has_styles<T>` or remove T from MyTypes. "
+                                               "(Related errors may tell you more about what type T is)");
+};
 
 
 // This adds an implementation detail necessary for all uses
@@ -114,7 +139,8 @@ class Qplot
     std::unique_ptr<Subprocess<P>> subprocess_;
     std::ostringstream header_;
 
-    using S = styles_from_types<X>;
+    using Check = typename check_tuple<X>::type;
+    using S = typename styles_from_types<X>::type;
 
     S styles_;
     S stylesHeader_;
@@ -172,12 +198,13 @@ public:
 
     // Arg is an object to plot
     template <typename T, typename... Ts,
+              int key = tuple_element_index<typename has_styles<T>::type, S>::value,
               std::enable_if_t<!is_object_style<T,P>::value &&
-                               !is_canvas_style<T,P>::value, int> = 0>
+                               !is_canvas_style<T,P>::value &&
+                               key != -1, int> = 0>
     void processArgs(const T& obj, const Ts&... args)
     {
 		// Get the style variant that's currently associated with the arg type T
-        constexpr size_t key = tuple_contains_type<typename has_styles<T>::type, S>::value;
         auto styleVar = std::get<key>(styles_);
 
 		// Plot this object
@@ -186,6 +213,18 @@ public:
 		}, styleVar);
 
 		processArgs(args...);
+    }
+
+    template <typename T, typename... Ts,
+              int key = tuple_element_index<typename has_styles<T>::type, S>::value,
+              std::enable_if_t<!is_object_style<T,P>::value &&
+                               !is_canvas_style<T,P>::value &&
+                               key == -1, int> = 0>
+    void processArgs(const T& obj, const Ts&... args)
+    {
+        // Disable this assert to silently ignore unrecognised objects passed to Qplot::plot (not particularly recommended)
+        static_assert(key != -1, "A type was passed to plot() that is not recognised. (Did you forget to add this type to MyTypes?)");
+        std::cerr << "Warning: An unrecognised type was passed to plot() and was ignored" << std::endl;
     }
 
     template <typename... Ts>
@@ -201,9 +240,9 @@ public:
 		processArgs(args...);
 
         // Finally, close this process and reopen with a fresh instance
-        // + This ends out code stream to the process, which e.g. for python alows the process to start executin
+        // + This ends out code stream to the process, which e.g. for python allows the process to start execution
         // + Also important that each call to plot (aside from the intentional header) is stateless
-        subprocess_.reset();  // destory first
+        subprocess_.reset();  // destroy first
         subprocess_ = std::make_unique<Subprocess<P>>(NUM_CHANNELS);
 	}
 

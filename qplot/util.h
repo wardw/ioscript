@@ -18,45 +18,42 @@ std::string objName(const T& obj)
 // Returns the index if the variant contains the type, or -1 otherwise
 // Inspired from http://stackoverflow.com/a/25958302/254035
 
-template <typename T, size_t N, typename Variant>
-struct has_type;
+template <typename T, size_t N, typename Tuple>
+struct has_tuple_element;
 
 // Element not found
 template <typename T, size_t N>
-struct has_type<T, N, variant<>> : std::integral_constant<int,-1> {};   // TODO: breaks with monostate when type isn't in the variant
+struct has_tuple_element<T, N, std::tuple<>> : std::integral_constant<int,-1> {};
 
 // Match: T matches tuple element T, at iteration N
 template <typename T, size_t N, typename... Ts>
-struct has_type<T, N, variant<T, Ts...>> : std::integral_constant<int,N> {};
+struct has_tuple_element<T, N, std::tuple<T, Ts...>> : std::integral_constant<int,N> {};
 
 // No match: U is not T
 template <typename T, size_t N, typename U, typename... Ts>
-struct has_type<T, N, variant<U, Ts...>> : has_type<T, N+1, variant<Ts...>> {};
+struct has_tuple_element<T, N, std::tuple<U, Ts...>> : has_tuple_element<T, N+1, std::tuple<Ts...>> {};
 
-template <typename T, typename Variant>
-using variant_contains_type = typename has_type<T, 0, Variant>::type;
+template <typename T, typename Tuple>
+using tuple_element_index = typename has_tuple_element<T, 0, Tuple>::type;
 
 
 // Same for variant
 // Seems not possilbe to additionally match `variant` as e.g. `typename Container` ?
 
-template <typename T, size_t N, typename Tuple>
-struct has_type;
+template <typename T, size_t N, typename Variant>
+struct has_variant_element;
 
-// We've exhausted searching all tuple elements - not found
 template <typename T, size_t N>
-struct has_type<T, N, std::tuple<>> : std::integral_constant<int,-1> {};
+struct has_variant_element<T, N, variant<>> : std::integral_constant<int,-1> {};   // TODO: breaks with monostate when type isn't in the variant
 
-// A match: T matches the first T of the tuple, now at position N
 template <typename T, size_t N, typename... Ts>
-struct has_type<T, N, std::tuple<T, Ts...>> : std::integral_constant<int,N> {};
+struct has_variant_element<T, N, variant<T, Ts...>> : std::integral_constant<int,N> {};
 
-// No match: U is not T
 template <typename T, size_t N, typename U, typename... Ts>
-struct has_type<T, N, std::tuple<U, Ts...>> : has_type<T, N+1, std::tuple<Ts...>> {};
+struct has_variant_element<T, N, variant<U, Ts...>> : has_variant_element<T, N+1, variant<Ts...>> {};
 
-template <typename T, typename Tuple>
-using tuple_contains_type = typename has_type<T, 0, Tuple>::type;
+template <typename T, typename Variant>
+using variant_element_index = typename has_variant_element<T, 0, Variant>::type;
 
 
 
@@ -68,9 +65,7 @@ struct is_variant : std::false_type {};
 template <typename T, typename... Ts>
 struct is_variant<variant<T,Ts...>>  : std::true_type {};
 
-// test
-static_assert( is_variant<variant<int,float>>::value,"");
-static_assert(!is_variant<std::nullptr_t>::value, "");
+
 
 template <typename StyleVariant, typename Style, int key>
 void updateTuple(StyleVariant& styleVariant, const Style& style, std::integral_constant<int,key>)
@@ -92,8 +87,8 @@ struct TupleUpdater {
         using StyleVariant = std::tuple_element_t<N-1, Tuple>;
 
         static_assert(is_variant<StyleVariant>::value,
-                      "The Styles template parameter in Qplot<Styles> must be a tuple containing only variants");
-        using Result = variant_contains_type<Style, StyleVariant>;
+                      "Specializations of has_styles<T> must define the alias `type` == `variant<Args...>`");
+        using Result = variant_element_index<Style, StyleVariant>;
 
         auto& styleVariant = std::get<N-1>(plotStyles);
         updateTuple(styleVariant, style, Result{});
@@ -110,7 +105,7 @@ struct TupleUpdater<Style, Tuple, 1> {
 
         static_assert(is_variant<StyleVariant>::value,
                      "The Styles template parameter in Qplot<Styles> must be a tuple containing only variants");
-        using Result = variant_contains_type<Style, StyleVariant>;
+        using Result = variant_element_index<Style, StyleVariant>;
 
         auto& styleVariant = std::get<0>(plotStyles);
         updateTuple(styleVariant, style, Result{});
