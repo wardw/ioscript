@@ -130,8 +130,8 @@ public:
                 std::cerr << "error closing (read) file descriptor "
                           << channels_[i].fd_r << " on channel " << i << std::endl;
 
-            std::cerr << "Channel " << i << " opened with read end " << channels_[i].fd_r
-                      << " and write end " << channels_[i].fd_w << std::endl;
+            // std::cerr << "Channel " << i << " opened with read end " << channels_[i].fd_r
+            //           << " and write end " << channels_[i].fd_w << std::endl;
         }
     }
     ~Subprocess() {
@@ -146,7 +146,7 @@ public:
         }
 
         // Close process
-        std::cout << "pclose returned: " << pclose(file_) << std::endl;
+        std::cerr << "pclose returned: " << pclose(file_) << std::endl;
     }
 
     template <typename U>

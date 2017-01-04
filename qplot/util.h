@@ -14,20 +14,18 @@ std::string objName(const T& obj)
     return os.str();
 }
 
-// Find wether a variant contains a given type
-
+// Find whether a variant contains a given type
 // Returns the index if the variant contains the type, or -1 otherwise
-// Adapted from http://stackoverflow.com/a/25958302/254035
+// Inspired from http://stackoverflow.com/a/25958302/254035
 
-// The general template is undefined, we're only intereted in the specializations below
 template <typename T, size_t N, typename Variant>
 struct has_type;
 
-// We've exhausted searching all variant elements - not found
+// Element not found
 template <typename T, size_t N>
 struct has_type<T, N, variant<>> : std::integral_constant<int,-1> {};   // TODO: breaks with monostate when type isn't in the variant
 
-// A match: T matches the first T of the variant, now at position N
+// Match: T matches tuple element T, at iteration N
 template <typename T, size_t N, typename... Ts>
 struct has_type<T, N, variant<T, Ts...>> : std::integral_constant<int,N> {};
 
@@ -39,7 +37,8 @@ template <typename T, typename Variant>
 using variant_contains_type = typename has_type<T, 0, Variant>::type;
 
 
-// Todo: meta up with above
+// Same for variant
+// Seems not possilbe to additionally match `variant` as e.g. `typename Container` ?
 
 template <typename T, size_t N, typename Tuple>
 struct has_type;
@@ -59,6 +58,9 @@ struct has_type<T, N, std::tuple<U, Ts...>> : has_type<T, N+1, std::tuple<Ts...>
 template <typename T, typename Tuple>
 using tuple_contains_type = typename has_type<T, 0, Tuple>::type;
 
+
+
+// Test wether T is a variant of any args
 
 template <typename T>
 struct is_variant : std::false_type {};

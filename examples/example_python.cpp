@@ -194,7 +194,8 @@ struct Title
 {
 	const char* title;
 	void operator()(Subprocess<Python>& python) const {
-		python << "plt.title(\"" << title << "\")\n";
+		python << "figtitle = \"" << title << "\"\n"
+		       << "plt.title(figtitle)" << endl;
 	}
 };
 
@@ -210,11 +211,22 @@ struct Show {
 	void operator()(Subprocess<Python>& python) const { python << "plt.show()\n"; }
 };
 
+struct SaveFig {
+	void operator()(Subprocess<Python>& python) const {
+		python << R"(
+if 'figtitle' not in locals():
+	plt.savefig('output.png')
+else:
+	plt.savefig(figtitle)
+)";
+	}
+};
+
 struct DefaultSnippet
 {
 	template <typename T>
 	void operator()(Subprocess<Python>& python, const T& obj) const {
-		clog << "Default snippet called, this obj hasn't been associated to any other snippet" << endl;
+		clog << "Default snippet called, this `obj` doesn't refer to any other snippet" << endl;
 	}
 };
 
@@ -238,8 +250,6 @@ using QpPython = Qplot<Python,MyTypes>;
 
 void example_python()
 {
-	cout << "MyTypes: " << objName(styles_from_types<MyTypes>{}) << endl;
-
 	std::default_random_engine gen;
 
 	std::uniform_int_distribution<> uniform_int(0,10);
@@ -263,11 +273,11 @@ void example_python()
 	QpPython qp(Header{});
 
 	// LineChart is automatically the default as the first variant alternative
-    qp.plot(Title{"Example 1"}, vals1, vals2, vals3, Show());
-    qp.plot(Title{"Example 2"}, BarChart{2}, vals2, vals3, Show{});
-    qp.plot(Title{"Example 3"}, BarChart{1}, vals2, LineChart{}, vals3, Show{});
+    qp.plot(Title{"Example 1"}, vals1, vals2, vals3, SaveFig{});
+    qp.plot(Title{"Example 2"}, BarChart{2}, vals2, vals3, SaveFig{});
+    qp.plot(Title{"Example 3"}, BarChart{1}, vals2, LineChart{}, vals3, SaveFig{});
 
-    // Or use a lambda
+    // Use a lambda
 	qp.plot(Title{"Example 4"}, LineChart{}, vals2, [](Subprocess<Python>& py) {
         py << "plt.savefig('Example 4.png')\n";
     });
@@ -280,14 +290,14 @@ void example_python()
     	points[n].y = normal_dist(gen);
     	n++;
     }
- 	qp.plot(Title{"Example 5"}, ScatterPlot{50}, points, Show{});
+ 	qp.plot(Title{"Example 5"}, ScatterPlot{30}, points, SaveFig{});
 
 
 	std::vector<int>   series1{1,1,2,3,5,8,13,21,34,55,89};
 	std::array<int,11> series2{1,3,6,10,15,21,28,36,45,55,66};
 	qp.plot(Subplot{211}, Title{"Example 6 (a)"}, ScatterPlot{50}, series1, series2,
 		    Subplot{212}, Title{"Example 6 (b)"}, LineChart{}, series1, series2,
-		    Show{});
+		    SaveFig{});
 
 	// We've not added a mapping to associate a `double`. This will call our default snippet
 	qp.plot(42.f);

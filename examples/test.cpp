@@ -38,8 +38,4 @@ template <> struct has_styles<char>   { using type = variant<B,C,D>; };
 
 void testing()
 {
-	using MyTypes = std::tuple<int,float,char>;
-
-	cout << "MyTypes: " << objName(MyTypes{}) << endl;
-	cout << "MyTypes mapped: " << objName(styles_from_types<MyTypes>{}) << endl;
 }

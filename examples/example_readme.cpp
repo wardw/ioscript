@@ -12,8 +12,7 @@ import matplotlib.pyplot as plt
 
 vals = map(int, qp_data_in[0].readline().split())
 plt.plot(vals, 'o-')
-)" << std::endl;
-
+)";
         for (auto& elem : obj) {
             python.data_out() << elem << " ";
         }
