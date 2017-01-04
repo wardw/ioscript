@@ -126,7 +126,7 @@ template <size_t M, size_t N> struct has_styles<Array2d<M,N>> { using type = Sca
 
 
 using MyTypes = std::tuple<MyArray>;
-using Qp = Qplot<Gnuplot,MyTypes>;
+using QpGnuplot = Qplot<Gnuplot,MyTypes>;
 
 void example_gnuplot()
 {
@@ -139,7 +139,7 @@ void example_gnuplot()
     	}
     }
 
-	Qp qplot(Header{}, HeatMap{}, Colours{Colours::RAINBOW});
+	QpGnuplot qplot(Header{}, HeatMap{}, Colours{Colours::RAINBOW});
     qplot.plot(Filename{"Grid1"}, array);
     qplot.plot(Filename{"Grid2"}, ContourPlot{}, array);
     qplot.plot(Filename{"Grid3"}, ImageSize{800,600}, array);     // Same as Grid1, but larger

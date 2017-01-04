@@ -11,6 +11,7 @@
 // Enable this macro definition to use boost/variant instead of C++17 std::variant
 // #define WITH_BOOST_VARIANT
 
+constexpr unsigned NUM_CHANNELS = 3;
 
 #ifdef WITH_BOOST_VARIANT
     #include <boost/variant.hpp>
@@ -124,7 +125,7 @@ public:
 
     template <typename... Ts>
     Qplot(Ts&&... args) :
-        subprocess_(std::make_unique<Subprocess<P>>())
+        subprocess_(std::make_unique<Subprocess<P>>(NUM_CHANNELS))
     {
         addPrivateHeader(*this);
         addToHeader(args...);
@@ -203,7 +204,7 @@ public:
         // + This ends out code stream to the process, which e.g. for python alows the process to start executin
         // + Also important that each call to plot (aside from the intentional header) is stateless
         subprocess_.reset();  // destory first
-        subprocess_ = std::make_unique<Subprocess<P>>();
+        subprocess_ = std::make_unique<Subprocess<P>>(NUM_CHANNELS);
 	}
 
     template <typename... Ts>

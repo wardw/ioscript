@@ -157,6 +157,39 @@ plt.scatter(x, y, s=)" << pointSize << R"()
 	}
 };
 
+struct MultiChannel
+{
+	void operator()(Subprocess<Python>& python) const
+	{
+        python <<
+R"(
+x = map(float, qp_data_in[0].readline().split())
+y = map(float, qp_data_in[1].readline().split())
+z = map(float, qp_data_in[2].readline().split())
+plt.scatter(x, y, c=z, s=)" << pointSize_ << R"()
+)";
+	}
+
+	void operator()(Subprocess<Python>& python, const vector<Point>& points) const
+	{
+		for (auto elem : points) {
+			python.data_out(0) << elem.x << ' ';
+			python.data_out(1) << elem.y << ' ';
+			python.data_out(2) << sqrt((elem.x-5)*(elem.x-5) + (elem.y-5)*(elem.y-5))<< ' ';
+		}
+		python.data_out(0) << endl;
+		python.data_out(1) << endl;
+		python.data_out(2) << endl;
+	}
+
+	template <typename T>
+	void operator()(Subprocess<Python>& python, const T& points) const {}
+
+private:
+	int n_ = 0;
+	int pointSize_ = 10;
+};
+
 struct Title
 {
 	const char* title;
@@ -195,7 +228,7 @@ struct qp::has_styles { using type = variant<DefaultSnippet>; };
 // These maps our data types to the relevant code snippets they may be called with
 template <typename T> struct has_styles<std::vector<T>>      { using type = variant<LineChart,ScatterPlot>; };
 template <>           struct has_styles<std::map<int,int>>   { using type = variant<LineChart,BarChart>; };
-template <>           struct has_styles<std::vector<Point>>  { using type = variant<ScatterPlot>; };
+template <>           struct has_styles<std::vector<Point>>  { using type = variant<ScatterPlot,MultiChannel>; };
 template <size_t N>   struct has_styles<std::array<int,N>>   { using type = variant<ScatterPlot>; };
 
 
@@ -266,6 +299,8 @@ void example_python()
  	// 	sendData<0>(py, points);
  	// },
  	// Show{});
+
+ 	qp.plot(Title{"Example 7"}, MultiChannel{}, points, Show{});
 }
 
 // But one requirement is that for any data object T that relates a set of 'style' variants (BarChart, LineChart etc), each
