@@ -6,6 +6,8 @@
 using namespace std;
 using namespace qp;
 
+namespace {
+
 struct Point {
 	float x;
 	float y;
@@ -230,6 +232,9 @@ struct DefaultSnippet
 	}
 };
 
+} // namespace
+
+
 // Define this primary template to act as a 'default snippet' to match any type, useful if you
 // find you're repeating yourself a lot for common behaviour.  Any specializations below will
 // take precedence over this, as per C++'s template specialization rules
@@ -242,7 +247,6 @@ template <typename T> struct has_styles<std::vector<T>>      { using type = vari
 template <>           struct has_styles<std::map<int,int>>   { using type = variant<LineChart,BarChart>; };
 template <>           struct has_styles<std::vector<Point>>  { using type = variant<ScatterPlot,MultiChannel>; };
 template <size_t N>   struct has_styles<std::array<int,N>>   { using type = variant<ScatterPlot>; };
-
 
 
 using MyTypes = std::tuple<vector<int>, map<int,int>, vector<Point>, array<int,0>, double>;

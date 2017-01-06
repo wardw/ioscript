@@ -7,6 +7,8 @@
 using namespace std;
 using namespace qp;
 
+namespace {
+
 constexpr int SIZE_M = 20;
 constexpr int SIZE_N = 20;
 
@@ -118,12 +120,14 @@ struct Colours
     Palette palette;
 };
 
+} // namespace
+
+
 using Scalar2D = qp::variant<HeatMap, NumberGrid, ContourPlot>;
 
 // Alternatively, associate 2d arrays of all sizes with our Scalar2D variant
 template <>                   struct has_styles<MyArray>      { using type = Scalar2D; };
 template <size_t M, size_t N> struct has_styles<Array2d<M,N>> { using type = Scalar2D; };
-
 
 using MyTypes = std::tuple<MyArray>;
 using QpGnuplot = Qplot<Gnuplot,MyTypes>;

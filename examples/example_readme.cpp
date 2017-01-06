@@ -3,43 +3,42 @@
 
 using namespace qp;
 
+namespace {
+
 struct LineChart {
     template <typename T>
-    void operator()(Subprocess<Python>& python, const T& obj)
+    void operator()(Subprocess<Python>& python, const T& obj) const
     {
         python << R"(
 import matplotlib.pyplot as plt
-
 vals = map(int, qp_data_in[0].readline().split())
 plt.plot(vals, 'o-')
 )";
         for (auto& elem : obj) {
-            python.data_out() << elem << " ";
+            python.data_out(0) << elem << " ";
         }
-        python.data_out() << std::endl;
+        python.data_out(0) << std::endl;
     }
 };
 
-struct Title {
-    void operator()(Subprocess<Python>& python) const {
-        python << "plt.title(\"" << title << "\")\n";
-    }
-    const char* title;
+struct Show {
+    void operator()(Subprocess<Python>& python) const { python << "plt.show()\n"; }
 };
 
-template <> struct has_styles<std::vector<int>> { using type = variant<LineChart>; };
+} // namespace
 
 using MyTypes = std::tuple<std::vector<int>>;
 
-void example_readme()
+template <>
+struct has_styles<std::vector<int>> { using type = variant<LineChart>; };
+
+int example_readme()
 {
     std::vector<int> series1{0,1,1,2,3,5,8,13,21,34,55,89};
     std::vector<int> series2{0,1,3,6,10,15,21,28,36,45,55,66,78,91};
 
-    auto show = [](Subprocess<Python>& py) {   // or write inline
-        py << "plt.show()" << std::endl;
-    };
+    Qplot<Python,MyTypes> qplot;
+    qplot.plot(LineChart{}, series1, series2, Show{});
 
-    qp::Qplot<Python,MyTypes> qp;
-    qp.plot(LineChart{}, series1, series2, Title{"Readme example"}, show);
+    return 0;
 }
