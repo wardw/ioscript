@@ -71,6 +71,8 @@ using styles_from_types = get_styles<std::tuple<>, Tuple>;
 
 
 // Check that the given type refers to a variant with at least one style
+// todo: this check is supported on C++17 only
+#ifndef WITH_BOOST_VARIANT
 
 template <typename T, typename U = void>
 struct has_related_style {
@@ -95,6 +97,7 @@ struct check_tuple<std::tuple<T, Ts...>> : check_tuple<std::tuple<Ts...>> {
                                                "(Related errors may tell you more about what type T is)");
 };
 
+#endif
 
 // This adds an implementation detail necessary for all uses
 // For more information see the Subprocess section of README.md and examples_process.cpp
@@ -139,7 +142,10 @@ class Qplot
     std::unique_ptr<Subprocess<P>> subprocess_;
     std::ostringstream header_;
 
+// todo: this check is supported on C++17 only
+#ifndef WITH_BOOST_VARIANT
     using Check = typename check_tuple<X>::type;
+#endif
     using S = typename styles_from_types<X>::type;
 
     S styles_;
