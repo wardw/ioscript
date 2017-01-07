@@ -53,6 +53,7 @@ x = map(int, iosc_in[0].readline().split())
 y = map(int, iosc_in[1].readline().split())
 plt.plot(x, y, 'o-')
 )";
+		// Check NUM_OPEN_CHANNELS in ioscript.h for the current limit (todo: make part of Script class)
 		for (auto elem : obj) {
 			python.data_out(0) << elem.first << ' ';
 			python.data_out(1) << elem.second << ' ';

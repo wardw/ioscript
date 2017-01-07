@@ -11,13 +11,13 @@
 
 #include <unistd.h>  // for write
 
+constexpr unsigned NUM_OPEN_CHANNELS = 16;
+
 // Enable this macro definition to send all output to stdout in exactly the form as if sent to the subprocess
 // #define QPLOT_DEBUG
 
 // Enable this macro definition to use boost/variant instead of C++17 std::variant
 // #define WITH_BOOST_VARIANT
-
-constexpr unsigned NUM_CHANNELS = 3;
 
 #ifdef WITH_BOOST_VARIANT
     #include <boost/variant.hpp>
@@ -479,7 +479,7 @@ class Script
 public:
     template <typename... Ts>
     Script(Ts&&... args) :
-        subprocess_(std::make_unique<Process<P>>(NUM_CHANNELS))
+        subprocess_(std::make_unique<Process<P>>(NUM_OPEN_CHANNELS))
     {
         addPrivateHeader(*this);
         addToHeader(args...);
@@ -571,7 +571,7 @@ public:
         // + This ends out code stream to the process, which e.g. for python allows the process to start execution
         // + Also important that each call to plot (aside from the intentional header) is stateless
         subprocess_.reset();  // destroy first
-        subprocess_ = std::make_unique<Process<P>>(NUM_CHANNELS);
+        subprocess_ = std::make_unique<Process<P>>(NUM_OPEN_CHANNELS);
 	}
 
     template <typename... Ts>
