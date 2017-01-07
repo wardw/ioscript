@@ -1,4 +1,6 @@
 #include "qplot/qplot.h"
+#include "qplot/python.h"
+
 #include <vector>
 #include <map>
 #include <random>

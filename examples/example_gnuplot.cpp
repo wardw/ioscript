@@ -3,6 +3,7 @@
 #include <cmath>
 
 #include "qplot/qplot.h"
+#include "qplot/gnuplot.h"
 
 using namespace std;
 using namespace qp;

@@ -3,6 +3,8 @@
 #include <map>
 
 #include "qplot/qplot.h"
+#include "qplot/gnuplot.h"
+#include "qplot/python.h"
 
 using namespace std;
 using namespace qp;

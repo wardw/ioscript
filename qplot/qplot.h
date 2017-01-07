@@ -122,15 +122,6 @@ protected:
 struct Null    { static constexpr const char* cmd = "cat > /dev/null"; };
 struct Cat     { static constexpr const char* cmd = "cat"; };
 
-#ifdef QPLOT_DEBUG
-struct Python  { static constexpr const char* cmd = "cat"; };
-struct Gnuplot { static constexpr const char* cmd = "cat"; };
-#else
-struct Python  { static constexpr const char* cmd = "python"; };
-struct Gnuplot { static constexpr const char* cmd = "gnuplot"; };
-#endif
-
-
 template <typename T>
 class Subprocess
 {
@@ -461,42 +452,9 @@ using styles_from_types = get_styles<std::tuple<>, Tuple>;
     };
 #endif
 
-// This adds an implementation detail necessary for all uses
-// For more information see the Subprocess section of README.md and examples_process.cpp
-struct PythonHeader
-{
-    void operator()(Subprocess<Python>& python) const
-    {
-        python.out()
-            << "# This header has been added by Qplot. See qplot.h\n"
-            << "import os\n"
-            << "qp_data_in = list()\n"
-            << "\n";
-
-        for (int i=0; i<python.numChannels(); i++) {
-            python.out()
-                << "os.close(" << python.fd_w(i) << ")\n"
-                << "qp_data_in.append(os.fdopen(" << python.fd_r(i) << ", 'r'))\n"
-                << "\n";
-        }
-    }
-};
-
+// Primary template, with specializations for each process in separate headers
 template <typename P, typename S>
-void addPrivateHeader(Qplot<P,S>& python)
-{
-}
-
-template <typename S>
-void addPrivateHeader(Qplot<Python,S>& python)
-{
-    python.addToHeader(PythonHeader{});
-}
-
-template <typename S>
-void addPrivateHeader(Qplot<Gnuplot,S>& python)
-{
-}
+void addPrivateHeader(Qplot<P,S>& python) {}
 
 template <typename P, typename X>
 class Qplot

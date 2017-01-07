@@ -1,4 +1,5 @@
 #include "qplot/qplot.h"
+#include "qplot/python.h"
 #include <vector>
 
 using namespace qp;
