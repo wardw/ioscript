@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ioscript/ioscript.h"
+#include "ioscript.h"
 
 namespace iosc {
 
