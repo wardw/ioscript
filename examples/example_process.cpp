@@ -14,7 +14,7 @@ void example1()
 {
 	// Create a Process object with a single r/w pipe
 	// This pipe is referred to as 'channel 0' (by Process) but maps to arbitary system file descriptors
-	Process<Ruby> ruby{0};
+	Process<Ruby> ruby{1};
 
 	ruby << "puts 'Hello, world!'" << endl;
 
@@ -38,7 +38,7 @@ io.each_line {|line| puts "vals: #{line.split().map { |s| s.to_i }}" }
 
 void example2()
 {
-	Process<Python> python{0};
+	Process<Python> python{1};
 
 	python << "print \"Hello, world!\"" << endl;
 
