@@ -137,7 +137,7 @@ public:
         {
             int filedes[2];
             if (pipe(filedes) == -1) {
-                std::cerr << "pipe() returned with error" << std::endl;
+                std::cerr << "(ioscript) pipe() returned with error" << std::endl;
                 assert(false);
             }
             channels_.push_back(Fd{filedes[0], filedes[1]});
@@ -148,7 +148,7 @@ public:
 
         // Fork process
         if (!(file_ = popen(T::cmd, "w"))) {
-            std::cerr << "popen returned with error" << std::endl;
+            std::cerr << "(ioscript) popen returned with error" << std::endl;
             assert(false);  // todo
         }
 
@@ -158,10 +158,10 @@ public:
         for (unsigned i=0; i<numChannels; i++)
         {
             if (close(channels_[i].fd_r) == -1)
-                std::cerr << "error closing (read) file descriptor "
+                std::cerr << "(ioscript) error closing (read) file descriptor "
                           << channels_[i].fd_r << " on channel " << i << std::endl;
 
-            // std::cerr << "Channel " << i << " opened with read end " << channels_[i].fd_r
+            // std::cerr << "(ioscript) Channel " << i << " opened with read end " << channels_[i].fd_r
             //           << " and write end " << channels_[i].fd_w << std::endl;
         }
     }
@@ -170,14 +170,16 @@ public:
         for (unsigned i=0; i<channels_.size(); i++)
         {
             if (close(channels_[i].fd_w) == -1) {
-                std::cerr << "error closing (write) file descriptor "
+                std::cerr << "(ioscript) error closing (write) file descriptor "
                           << channels_[i].fd_w << " on channel " << i << std::endl;
                 assert(false);
             }
         }
 
         // Close process
-        std::cerr << "pclose returned: " << pclose(file_) << std::endl;
+        int retVal = pclose(file_);
+        if (retVal != 0)
+            std::cerr << "(ioscript) pclose returned with exit code: " << retVal << std::endl;
     }
 
     template <typename U>
@@ -552,7 +554,7 @@ public:
     {
         // Disable this assert to silently ignore unrecognised objects passed to Script::run (not particularly recommended)
         static_assert(key != -1, "A type was passed to run() that is not recognised. (Did you forget to add this type to MyTypes?)");
-        std::cerr << "Warning: An unrecognised type was passed to run() and was ignored" << std::endl;
+        std::cerr << "(ioscript) Warning: An unrecognised type was passed to run() and was ignored" << std::endl;
     }
 
     template <typename... Ts>
