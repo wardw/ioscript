@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0)
-project(qplot_examples)
+project(ioscript_examples)
 
 
 # Options
@@ -19,7 +19,7 @@ set(src "main.cpp"
 	    )
 
 include_directories(..)
-add_executable(qplot_examples ${src})
+add_executable(ioscript_examples ${src})
 
 if (USE_BOOST_VARIANT)
 	find_package(Boost REQUIRED)
@@ -27,13 +27,13 @@ if (USE_BOOST_VARIANT)
 		include_directories(${Boost_INCLUDE_DIRS})
 	    add_definitions(-DWITH_BOOST_VARIANT)
 	endif()
-	target_compile_options(qplot_examples PRIVATE -std=c++14)
+	target_compile_options(ioscript_examples PRIVATE -std=c++14)
 else()
 	# Compile with C++1z
 	include_directories("${LLVM_PATH}/include/c++/v1")
-	target_compile_options(qplot_examples PRIVATE -nostdinc++ -std=c++1z -stdlib=libc++)
+	target_compile_options(ioscript_examples PRIVATE -nostdinc++ -std=c++1z -stdlib=libc++)
 	# Link to C++1z libc++
-	target_link_libraries(qplot_examples "-lstdc++")
-	target_link_libraries(qplot_examples "-L${LLVM_PATH}/lib")
-	target_link_libraries(qplot_examples "-Wl,-rpath,${LLVM_PATH}/lib")
+	target_link_libraries(ioscript_examples "-lstdc++")
+	target_link_libraries(ioscript_examples "-L${LLVM_PATH}/lib")
+	target_link_libraries(ioscript_examples "-Wl,-rpath,${LLVM_PATH}/lib")
 endif()

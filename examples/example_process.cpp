@@ -1,8 +1,8 @@
-#include "qplot/qplot.h"
-#include "qplot/python.h"
+#include "ioscript/ioscript.h"
+#include "ioscript/python.h"
 
 using namespace std;
-using namespace qp;
+using namespace iosc;
 
 namespace {
 
@@ -12,7 +12,7 @@ struct Ruby { static constexpr const char* cmd = "ruby"; };
 
 void example1()
 {
-	Subprocess<Ruby> ruby;
+	Process<Ruby> ruby;
 
 	ruby << "puts 'Hello, world!'" << endl;
 
@@ -36,7 +36,7 @@ io.each_line {|line| puts "vals: #{line.split().map { |s| s.to_i }}" }
 
 void example2()
 {
-	Subprocess<Python> python;
+	Process<Python> python;
 
 	python << "print \"Hello, world!\"" << endl;
 
@@ -51,9 +51,9 @@ void example2()
 	       << "os.close(" << python.fd_w() << ")\n";
 
 	// Create a file object to the read end
-	python << "qp_data_in = os.fdopen(" << python.fd_r() << ", 'r')\n"
+	python << "iosc_in = os.fdopen(" << python.fd_r() << ", 'r')\n"
 		   << R"(
-for line in qp_data_in:
+for line in iosc_in:
 	print "vals:", map(int, line.split())
 )" << endl;
 }

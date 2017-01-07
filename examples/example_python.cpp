@@ -1,12 +1,12 @@
-#include "qplot/qplot.h"
-#include "qplot/python.h"
+#include "ioscript/ioscript.h"
+#include "ioscript/python.h"
 
 #include <vector>
 #include <map>
 #include <random>
 
 using namespace std;
-using namespace qp;
+using namespace iosc;
 
 namespace {
 
@@ -17,7 +17,7 @@ struct Point {
 
 struct Header
 {
-	void operator()(Subprocess<Python>& python) const {
+	void operator()(Process<Python>& python) const {
 		python << "import matplotlib.pyplot as plt" << endl;
 		python << "figtitle = 'Default title'" << endl;
 	}
@@ -32,11 +32,11 @@ struct LineChart
 {
 	// For selecting behaviour based on the type, the usual rules for overloading apply.
 	template <typename T>
-	void operator()(Subprocess<Python>& python, const vector<T>& obj) const
+	void operator()(Process<Python>& python, const vector<T>& obj) const
 	{
         python <<
 R"(
-x = map(int, qp_data_in[0].readline().split())
+x = map(int, iosc_in[0].readline().split())
 plt.plot(x, 'o-')
 )";
 		for (int i=0; i<obj.size(); i++) {
@@ -45,12 +45,12 @@ plt.plot(x, 'o-')
 		python.data_out(0) << endl;
 	}
 
-	void operator()(Subprocess<Python>& python, const map<int,int>& obj) const
+	void operator()(Process<Python>& python, const map<int,int>& obj) const
 	{
         python <<
 R"(
-x = map(int, qp_data_in[0].readline().split())
-y = map(int, qp_data_in[1].readline().split())
+x = map(int, iosc_in[0].readline().split())
+y = map(int, iosc_in[1].readline().split())
 plt.plot(x, y, 'o-')
 )";
 		for (auto elem : obj) {
@@ -63,7 +63,7 @@ plt.plot(x, y, 'o-')
 
 	// Unfortunately you must always provide the `const T&` version anyway, even if it does nothing (todo)
 	template <typename T>
-	void operator()(Subprocess<Python>& python, const T& obj) const {}
+	void operator()(Process<Python>& python, const T& obj) const {}
 };
 
 // Type 2. Separate the Python code by moving the code to the one-argument `operator()` form.
@@ -75,21 +75,21 @@ struct ScatterPlot
 	ScatterPlot() {}
 	ScatterPlot(int pointSize) : pointSize_(pointSize) {}
 
-	void operator()(Subprocess<Python>& python) const
+	void operator()(Process<Python>& python) const
 	{
         python <<
 R"(
 import math
 
-x = map(float, qp_data_in[0].readline().split())
-y = map(float, qp_data_in[1].readline().split())
+x = map(float, iosc_in[0].readline().split())
+y = map(float, iosc_in[1].readline().split())
 z = [math.sqrt((a[0]-5)**2 + (a[1]-5)**2) for a in zip(x,y)]
 
 plt.scatter(x, y, c=z, s=)" << pointSize_ << R"()
 )";
 	}
 
-	void operator()(Subprocess<Python>& python, const vector<Point>& points)
+	void operator()(Process<Python>& python, const vector<Point>& points)
 	{
 		assert(plotNum_ == 0);
 		for (auto elem : points) {
@@ -101,7 +101,7 @@ plt.scatter(x, y, c=z, s=)" << pointSize_ << R"()
 	}
 
 	template <typename T>
-	void operator()(Subprocess<Python>& python, const vector<T>& obj)
+	void operator()(Process<Python>& python, const vector<T>& obj)
 	{
 		assert(plotNum_ < 2);
 		for (int i=0; i<obj.size(); i++) {
@@ -112,7 +112,7 @@ plt.scatter(x, y, c=z, s=)" << pointSize_ << R"()
 	}
 
 	template <typename T>
-	void operator()(Subprocess<Python>& python, const T& obj) const {}
+	void operator()(Process<Python>& python, const T& obj) const {}
 
 private:
 	int pointSize_ = 10;
@@ -124,7 +124,7 @@ private:
 
 int ScatterPlot::plotNum_ = 0;
 
-void sendBarData(Subprocess<Python>& python, const std::vector<int>& obj)
+void sendBarData(Process<Python>& python, const std::vector<int>& obj)
 {
 	for (int i=0; i<obj.size(); i++) {
 		python.data_out(0) << i      << ' ';
@@ -134,7 +134,7 @@ void sendBarData(Subprocess<Python>& python, const std::vector<int>& obj)
 	python.data_out(1) << endl;
 }
 
-void sendBarData(Subprocess<Python>& python, const std::map<int,int>& obj)
+void sendBarData(Process<Python>& python, const std::map<int,int>& obj)
 {
 	for (auto elem : obj) {
 		python.data_out(0) << elem.first << ' ';
@@ -151,7 +151,7 @@ struct BarChart
 {
 	int numPlots = 1;
 
-	void operator()(Subprocess<Python>& python) const
+	void operator()(Process<Python>& python) const
 	{
 		python <<
 R"(
@@ -163,12 +163,12 @@ plotNum = 0
 	}
 
 	template <typename T>
-	void operator()(Subprocess<Python>& python, const T& obj) const
+	void operator()(Process<Python>& python, const T& obj) const
 	{
         python <<
 R"(
-x = map(int, qp_data_in[0].readline().split())
-y = map(int, qp_data_in[1].readline().split())
+x = map(int, iosc_in[0].readline().split())
+y = map(int, iosc_in[1].readline().split())
 
 width = 1.0/numPlots
 xPos = plotNum * width
@@ -184,7 +184,7 @@ plotNum += 1
 struct Title
 {
 	const char* title;
-	void operator()(Subprocess<Python>& python) const {
+	void operator()(Process<Python>& python) const {
 		python << "figtitle = \"" << title << "\"\n"
 		       << "plt.title(figtitle)" << endl;
 	}
@@ -193,17 +193,17 @@ struct Title
 struct Subplot
 {
 	int subplot;
-	void operator()(Subprocess<Python>& python) const {
+	void operator()(Process<Python>& python) const {
 		python << "plt.subplot(" << subplot << ")\n";
 	}
 };
 
 struct Show {
-	void operator()(Subprocess<Python>& python) const { python << "plt.show()\n"; }
+	void operator()(Process<Python>& python) const { python << "plt.show()\n"; }
 };
 
 struct SaveFig {
-	void operator()(Subprocess<Python>& python) const {
+	void operator()(Process<Python>& python) const {
 		python << "plt.savefig(figtitle)" << endl;
 	}
 };
@@ -211,7 +211,7 @@ struct SaveFig {
 struct DefaultSnippet
 {
 	template <typename T>
-	void operator()(Subprocess<Python>& python, const T& obj) const {
+	void operator()(Process<Python>& python, const T& obj) const {
 		clog << "Default snippet called, this `obj` doesn't refer to any other snippet" << endl;
 	}
 };
@@ -222,20 +222,20 @@ struct DefaultSnippet
 // Define the primary template to act as a 'default snippet' to match any type, if necessary
 // Specializations below take precedence over this, as per C++'s template specialization rules
 template <typename T>
-struct qp::has_styles { using type = variant<DefaultSnippet>; };
+struct iosc::binds_to { using type = variant<DefaultSnippet>; };
 
 // These maps our data types to the relevant code snippets they may be called with
-template <typename T> struct has_styles<std::vector<T>>      { using type = variant<LineChart,BarChart,ScatterPlot>; };
-template <>           struct has_styles<std::map<int,int>>   { using type = variant<LineChart,BarChart>; };
+template <typename T> struct binds_to<std::vector<T>>      { using type = variant<LineChart,BarChart,ScatterPlot>; };
+template <>           struct binds_to<std::map<int,int>>   { using type = variant<LineChart,BarChart>; };
 
-// Note: For any data object T that relates a set of 'style' alternatives (BarChart, LineChart etc), each
-// alternative must implement operator()(Subprocess<P>&, const T& obj) for each possible T, regardless of
+// Note: For any data object T that relates a set of snippet ('style') alternatives (BarChart, LineChart etc), each
+// alternative must implement operator()(Process<P>&, const T& obj) for each possible T, regardless of
 // which is chosen during a call to `run` (Extends from the rules of std::variant).
 // This is why vector<Point> is bound separately, so LineChart & Barchart do not have to handle vector<Point>'s
-template <>           struct has_styles<std::vector<Point>>  { using type = variant<ScatterPlot>; };
+template <>           struct binds_to<std::vector<Point>>  { using type = variant<ScatterPlot>; };
 
 using MyTypes = std::tuple<vector<int>, map<int,int>, vector<Point>, double>;
-using QpPython = Qplot<Python,MyTypes>;
+using ScriptPy = Script<Python,MyTypes>;
 
 
 void example_python()
@@ -260,15 +260,15 @@ void example_python()
 		n++;
 	}
 
-	QpPython qp(Header{});
+	ScriptPy script(Header{});
 
 	// LineChart is automatically the default, being the first alternative of the variant
-    qp.plot(Title{"Example 1"}, vals1, vals2, vals3, SaveFig{});
-    qp.plot(Title{"Example 2"}, BarChart{2}, vals2, vals3, SaveFig{});
-    qp.plot(Title{"Example 3"}, BarChart{3}, vals1, vals2, vals3, LineChart{}, vals3, SaveFig{});
+    script.run(Title{"Example 1"}, vals1, vals2, vals3, SaveFig{});
+    script.run(Title{"Example 2"}, BarChart{2}, vals2, vals3, SaveFig{});
+    script.run(Title{"Example 3"}, BarChart{3}, vals1, vals2, vals3, LineChart{}, vals3, SaveFig{});
 
     // Use a lambda
-	qp.plot(Title{"Example 4"}, vals2, [](Subprocess<Python>& py) {
+	script.run(Title{"Example 4"}, vals2, [](Process<Python>& py) {
         py << "plt.savefig('Example 4.png')\n";
     });
 
@@ -280,14 +280,14 @@ void example_python()
     	points[n].y = normal_dist(gen);
     	n++;
     }
- 	qp.plot(Title{"Example 5"}, ScatterPlot{30}, points, SaveFig{});
+ 	script.run(Title{"Example 5"}, ScatterPlot{30}, points, SaveFig{});
 
 	std::vector<int> series1{1,1,2,3,5,8,13,21,34,55,89};
 	std::vector<int> series2{1,3,6,10,15,21,28,36,45,55,66};
-	qp.plot(Subplot{211}, Title{"Example 6 (a)"}, ScatterPlot{50}, series1, series2,
+	script.run(Subplot{211}, Title{"Example 6 (a)"}, ScatterPlot{50}, series1, series2,
 		    Subplot{212}, Title{"Example 6 (b)"}, LineChart{}, series1, series2,
 		    SaveFig{});
 
 	// There's no specialized mapping to associate a `double` - this will call our default snippet
-	qp.plot(42.f);
+	script.run(42.f);
 }

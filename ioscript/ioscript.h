@@ -26,8 +26,8 @@ constexpr unsigned NUM_CHANNELS = 3;
 #endif
 
 
-// Name qp::variant as either boost or stl
-namespace qp {
+// Name iosc::variant as either boost or stl
+namespace iosc {
 
 #ifdef WITH_BOOST_VARIANT
     using boost::variant;
@@ -47,6 +47,8 @@ namespace qp {
     }
 #endif
 
+
+/// "Process.h" ///
 
 // Adapted from Nicolai M. Josuttis, The C++ Standard Library - A Tutorial and Reference, 2nd Edition
 class fdoutbuf : public std::streambuf
@@ -123,10 +125,10 @@ struct Null    { static constexpr const char* cmd = "cat > /dev/null"; };
 struct Cat     { static constexpr const char* cmd = "cat"; };
 
 template <typename T>
-class Subprocess
+class Process
 {
 public:
-    Subprocess(unsigned numChannels=1)
+    Process(unsigned numChannels=1)
     {
         assert(numChannels < 1024); // todo
 
@@ -163,7 +165,7 @@ public:
             //           << " and write end " << channels_[i].fd_w << std::endl;
         }
     }
-    ~Subprocess() {
+    ~Process() {
         // Close 'data' pipe
         for (unsigned i=0; i<channels_.size(); i++)
         {
@@ -179,7 +181,7 @@ public:
     }
 
     template <typename U>
-    friend Subprocess& operator<<(Subprocess& process, U&& rhs) {
+    friend Process& operator<<(Process& process, U&& rhs) {
         *process.cfout_ << std::forward<U>(rhs);
         return process;
     }
@@ -190,21 +192,21 @@ public:
                     (*)(std::basic_ios<std::ostream::char_type,std::ostream::traits_type>&);
     using m3 = std::ios_base&(*)(std::ios_base&);
 
-    friend Subprocess& operator<<(Subprocess& process, m1 rhs) {
+    friend Process& operator<<(Process& process, m1 rhs) {
         *process.cfout_ << rhs;
         return process;
     }
-    friend Subprocess& operator<<(Subprocess& process, m2 rhs) {
+    friend Process& operator<<(Process& process, m2 rhs) {
         *process.cfout_ << rhs;
         return process;
     }
-    friend Subprocess& operator<<(Subprocess& process, m3 rhs) {
+    friend Process& operator<<(Process& process, m3 rhs) {
         *process.cfout_ << rhs;
         return process;
     }
 
-    Subprocess(const Subprocess&) = delete;
-    Subprocess& operator=(const Subprocess&) = delete;
+    Process(const Process&) = delete;
+    Process& operator=(const Process&) = delete;
 
     cf_ostream& out()  { return *cfout_; }
     fd_ostream& data_out(unsigned c=0) {
@@ -240,9 +242,11 @@ private:
 };
 
 
+/// "util.h" ///
+
 // Find whether a variant contains a given type
 // Returns the index if the variant contains the type, or -1 otherwise
-// Inspired from http://stackoverflow.com/a/25958302/254035
+// 'Inspired' from http://stackoverflow.com/a/25958302/254035
 
 template <typename T, size_t N, typename Tuple>
 struct has_tuple_element;
@@ -264,7 +268,7 @@ using tuple_element_index = typename has_tuple_element<T, 0, Tuple>::type;
 
 
 // Same for variant
-// Seems not possilbe to additionally match `variant` as e.g. `typename Container` ?
+// Seems not possilbe to merge with the above by also matching `variant` as e.g. `typename Container` ?
 
 template <typename T, size_t N, typename Variant>
 struct has_variant_element;
@@ -291,55 +295,53 @@ template <typename T, typename... Ts>
 struct is_variant<variant<T,Ts...>>  : std::true_type {};
 
 
-template <typename StyleVariant, typename Style, int key>
-void updateTuple(StyleVariant& styleVariant, const Style& style, std::integral_constant<int,key>)
+template <typename SnippetVariant, typename Snippet, int key>
+void updateTuple(SnippetVariant& snippetVariant, const Snippet& snippet, std::integral_constant<int,key>)
 {
-    styleVariant = style;
+    snippetVariant = snippet;
 }
 
-template <typename StyleVariant, typename Style>
-void updateTuple(StyleVariant& styleVariant, const Style& style, std::integral_constant<int,-1>)
+template <typename SnippetVariant, typename Snippet>
+void updateTuple(SnippetVariant& snippetVariant, const Snippet& snippet, std::integral_constant<int,-1>)
 {
-    // std::clog << "The styles variant " << objName(styleVariant)
-    //           << " does not contain the style " << objName(style) << std::endl;
+    // std::clog << "The snippets variant " << objName(snippetVariant)
+    //           << " does not contain the snippet " << objName(snippet) << std::endl;
 }
 
-template<class Style, class Tuple, std::size_t N>
+template<class Snippet, class Tuple, std::size_t N>
 struct TupleUpdater {
-    static void update(Tuple& plotStyles, const Style& style)
+    static void update(Tuple& scriptSnippets, const Snippet& snippet)
     {
-        using StyleVariant = std::tuple_element_t<N-1, Tuple>;
+        using SnippetVariant = std::tuple_element_t<N-1, Tuple>;
 
-        static_assert(is_variant<StyleVariant>::value,
-                      "Specializations of has_styles<T> must define the alias `type` == `variant<Args...>`");
-        using Result = variant_element_index<Style, StyleVariant>;
+        static_assert(is_variant<SnippetVariant>::value, "");
+        using Result = variant_element_index<Snippet, SnippetVariant>;
 
-        auto& styleVariant = std::get<N-1>(plotStyles);
-        updateTuple(styleVariant, style, Result{});
+        auto& snippetVariant = std::get<N-1>(scriptSnippets);
+        updateTuple(snippetVariant, snippet, Result{});
 
-        TupleUpdater<Style, Tuple, N-1>::update(plotStyles, style);
+        TupleUpdater<Snippet, Tuple, N-1>::update(scriptSnippets, snippet);
     }
 };
 
-template<class Style, class Tuple>
-struct TupleUpdater<Style, Tuple, 1> {
-    static void update(Tuple& plotStyles, const Style& style)
+template<class Snippet, class Tuple>
+struct TupleUpdater<Snippet, Tuple, 1> {
+    static void update(Tuple& scriptSnippets, const Snippet& snippet)
     {
-        using StyleVariant = std::tuple_element_t<0, Tuple>;
+        using SnippetVariant = std::tuple_element_t<0, Tuple>;
 
-        static_assert(is_variant<StyleVariant>::value,
-                     "The Styles template parameter in Qplot<Styles> must be a tuple containing only variants");
-        using Result = variant_element_index<Style, StyleVariant>;
+        static_assert(is_variant<SnippetVariant>::value, "");
+        using Result = variant_element_index<Snippet, SnippetVariant>;
 
-        auto& styleVariant = std::get<0>(plotStyles);
-        updateTuple(styleVariant, style, Result{});
+        auto& snippetVariant = std::get<0>(scriptSnippets);
+        updateTuple(snippetVariant, snippet, Result{});
     }
 };
 
 // Todo: can't we just have a base case for when N=0?
-template<class Style, class Tuple>
-struct TupleUpdater<Style, Tuple, 0> {
-    static void update(Tuple& plotStyles, const Style& style)
+template<class Snippet, class Tuple>
+struct TupleUpdater<Snippet, Tuple, 0> {
+    static void update(Tuple& scriptSnippets, const Snippet& snippet)
     {
     }
 };
@@ -373,68 +375,67 @@ public:
 };
 
 
-// Determine between 'object styles' and 'canvas styles'
-// + A 'canvas style' is any type which overloads operator() with the type `void(Qplot<P>&)`
-// + An 'object style' works likewise, but for the type `void(Qplot<P>&, constT&)` -- but see note, below
+// + A 'canvas snippet' is any type which overloads `operator()` with the type `void(Script<P>&)`  ("first form")
+// + An 'object snippet' works likewise, but for the type `void(Script<P>&, constT&)` -- but see note, below ("second form")
 
 template <typename P, typename S>
-class Qplot;
+class Script;
 
 template <typename T, typename P, typename U = void>
-struct is_canvas_style {
+struct is_script_snippet {
     static constexpr bool value = false;
 };
 
 template <typename T, typename P>
-struct is_canvas_style<T, P, std::enable_if_t<has_member_function<T, void(Subprocess<P>&)>::value>> {
+struct is_script_snippet<T, P, std::enable_if_t<has_member_function<T, void(Process<P>&)>::value>> {
     static constexpr bool value = true;
 };
 
 // This isn't great - there's probably a better way
 // This tests for a second parameter accepting a `const T&` by checking it supports `void*`
 template <typename T, typename P, typename U = void>
-struct is_object_style {
+struct is_object_snippet {
     static constexpr bool value = false;
 };
 
 template <typename T, typename P>
-struct is_object_style<T, P, std::enable_if_t<has_member_function<T, void(Subprocess<P>&,const void*&)>::value>> {
+struct is_object_snippet<T, P, std::enable_if_t<has_member_function<T, void(Process<P>&,const void*&)>::value>> {
     static constexpr bool value = true;
 };
 
 
 // With specializations in client code
 template <typename T>
-struct has_styles;
+struct binds_to;
 
 
-// Map a tuple of `types...` to a tuple of `has_styles<types...>::type`
+// Map a tuple of `types...` to a tuple of `binds_to<types...>::type`
 // There's probably a cleaner way..
 struct foo { using type = void; };
 
 template <typename... Ts>
-struct get_styles;
+struct get_snippets;
 
 template <typename... Xs>
-struct get_styles<std::tuple<Xs...>, std::tuple<>> : foo { using type = std::tuple<Xs...>; };
+struct get_snippets<std::tuple<Xs...>, std::tuple<>> : foo { using type = std::tuple<Xs...>; };
 
 template <typename U, typename... Xs, typename... Ts>
-struct get_styles<std::tuple<Xs...>, std::tuple<U, Ts...>> : get_styles<std::tuple<Xs...,typename has_styles<U>::type>, std::tuple<Ts...>> {};
+struct get_snippets<std::tuple<Xs...>, std::tuple<U, Ts...>> : get_snippets<std::tuple<Xs...,typename binds_to<U>::type>, std::tuple<Ts...>> {};
 
 template <typename Tuple>
-using styles_from_types = get_styles<std::tuple<>, Tuple>;
+using snippets_from_types = get_snippets<std::tuple<>, Tuple>;
 
 
-// Check that the given type refers to a variant with at least one style
+// Check that the given type refers to a variant with at least one snippet
 // todo: this check is supported on C++17 only
 #ifndef WITH_BOOST_VARIANT
     template <typename T, typename U = void>
-    struct has_related_style {
+    struct has_related_snippet {
         static constexpr bool value = false;
     };
 
     template <typename T>
-    struct has_related_style<T, std::enable_if_t<std::variant_size_v<typename has_styles<T>::type> != 0>> {
+    struct has_related_snippet<T, std::enable_if_t<std::variant_size_v<typename binds_to<T>::type> != 0>> {
         static constexpr bool value = true;
     };
 
@@ -446,38 +447,39 @@ using styles_from_types = get_styles<std::tuple<>, Tuple>;
 
     template <typename T, typename... Ts>
     struct check_tuple<std::tuple<T, Ts...>> : check_tuple<std::tuple<Ts...>> {
-        static_assert(has_related_style<T>::value, "A type T has been added to 'MyTypes' that does not refer to any style variant. "
-                                                   "Add a specialization `has_styles<T>` or remove T from MyTypes. "
-                                                   "(Related errors may tell you more about what type T is)");
+        static_assert(has_related_snippet<T>::value, "A type T has been added to 'MyTypes' that does not refer to any snippet variant. "
+                                                     "Add a specialization `binds_to<T>` or remove T from MyTypes. "
+                                                     "(Related errors might say more about what type T is)");
     };
 #endif
 
+
+/// "ioscript.h" ///
+
 // Primary template, with specializations for each process in separate headers
 template <typename P, typename S>
-void addPrivateHeader(Qplot<P,S>& python) {}
+void addPrivateHeader(Script<P,S>& python) {}
+
 
 template <typename P, typename X>
-class Qplot
+class Script
 {
-    std::unique_ptr<Subprocess<P>> subprocess_;
+    std::unique_ptr<Process<P>> subprocess_;
     std::ostringstream header_;
 
 // todo: this check is supported on C++17 only
 #ifndef WITH_BOOST_VARIANT
     using Check = typename check_tuple<X>::type;
 #endif
-    using S = typename styles_from_types<X>::type;
+    using S = typename snippets_from_types<X>::type;
 
-    S styles_;
-    S stylesHeader_;
+    S snippets_;
+    S snippetsHeader_;
 
 public:
-    using process = P;
-    using styles = S;
-
     template <typename... Ts>
-    Qplot(Ts&&... args) :
-        subprocess_(std::make_unique<Subprocess<P>>(NUM_CHANNELS))
+    Script(Ts&&... args) :
+        subprocess_(std::make_unique<Process<P>>(NUM_CHANNELS))
     {
         addPrivateHeader(*this);
         addToHeader(args...);
@@ -485,82 +487,82 @@ public:
 
     void processArgs() {}
 
-	// Arg is a canvas-style only
+	// Arg is a canvas-snippet (only)
     template <typename T, typename... Ts,
-              std::enable_if_t< is_canvas_style<T,P>::value &&
-                               !is_object_style<T,P>::value, int> = 0>
-    void processArgs(const T& style, const Ts&... args)
+              std::enable_if_t< is_script_snippet<T,P>::value &&
+                               !is_object_snippet<T,P>::value, int> = 0>
+    void processArgs(const T& snippet, const Ts&... args)
     {
-        style(*subprocess_);
+        snippet(*subprocess_);
 		processArgs(args...);
     }
 
-    // Arg is an object-style only
+    // Arg is an object-snippet (only)
     template <typename T, typename... Ts,
-              std::enable_if_t< is_object_style<T,P>::value &&
-                               !is_canvas_style<T,P>::value, int> = 0>
-    void processArgs(const T& style, const Ts&... args)
+              std::enable_if_t< is_object_snippet<T,P>::value &&
+                               !is_script_snippet<T,P>::value, int> = 0>
+    void processArgs(const T& snippet, const Ts&... args)
     {
-        // Update styles_ with this style for all variants in style_ that support it
-        constexpr size_t NumStyles = std::tuple_size<S>::value;
-        TupleUpdater<T, S, NumStyles>::update(styles_, style);
+        // Update snippets_ with this snippet for all variants in snippets_ that support it
+        constexpr size_t NumSnippets = std::tuple_size<S>::value;
+        TupleUpdater<T, S, NumSnippets>::update(snippets_, snippet);
 
         processArgs(args...);
     }
 
-    // Arg is both an object-style and canvas_style
+    // Arg is both an object-snippet and script-snippet
     template <typename T, typename... Ts,
-              std::enable_if_t<is_object_style<T,P>::value &&
-                               is_canvas_style<T,P>::value, int> = 0>
-    void processArgs(const T& style, const Ts&... args)
+              std::enable_if_t<is_object_snippet<T,P>::value &&
+                               is_script_snippet<T,P>::value, int> = 0>
+    void processArgs(const T& snippet, const Ts&... args)
     {
-        style(*subprocess_);
+        snippet(*subprocess_);
 
-        constexpr size_t NumStyles = std::tuple_size<S>::value;
-        TupleUpdater<T, S, NumStyles>::update(styles_, style);
+        constexpr size_t NumSnippets = std::tuple_size<S>::value;
+        TupleUpdater<T, S, NumSnippets>::update(snippets_, snippet);
 
         processArgs(args...);
     }
 
     // Arg is an object to plot
     template <typename T, typename... Ts,
-              int key = tuple_element_index<typename has_styles<T>::type, S>::value,
-              std::enable_if_t<!is_object_style<T,P>::value &&
-                               !is_canvas_style<T,P>::value &&
+              int key = tuple_element_index<typename binds_to<T>::type, S>::value,
+              std::enable_if_t<!is_object_snippet<T,P>::value &&
+                               !is_script_snippet<T,P>::value &&
                                key != -1, int> = 0>
     void processArgs(const T& obj, const Ts&... args)
     {
-		// Get the style variant that's currently associated with the arg type T
-        auto styleVar = std::get<key>(styles_);
+		// Get the snippet variant that's currently associated with the arg type T
+        auto snippetVar = std::get<key>(snippets_);
 
 		// Plot this object
-        qp::visit([this,&obj](auto&& style) {
-            style(*subprocess_, obj);
-		}, styleVar);
+        iosc::visit([this,&obj](auto&& snippet) {
+            snippet(*subprocess_, obj);
+		}, snippetVar);
 
 		processArgs(args...);
     }
 
     template <typename T, typename... Ts,
-              int key = tuple_element_index<typename has_styles<T>::type, S>::value,
-              std::enable_if_t<!is_object_style<T,P>::value &&
-                               !is_canvas_style<T,P>::value &&
+              int key = tuple_element_index<typename binds_to<T>::type, S>::value,
+              std::enable_if_t<!is_object_snippet<T,P>::value &&
+                               !is_script_snippet<T,P>::value &&
                                key == -1, int> = 0>
     void processArgs(const T& obj, const Ts&... args)
     {
-        // Disable this assert to silently ignore unrecognised objects passed to Qplot::plot (not particularly recommended)
-        static_assert(key != -1, "A type was passed to plot() that is not recognised. (Did you forget to add this type to MyTypes?)");
-        std::cerr << "Warning: An unrecognised type was passed to plot() and was ignored" << std::endl;
+        // Disable this assert to silently ignore unrecognised objects passed to Script::run (not particularly recommended)
+        static_assert(key != -1, "A type was passed to run() that is not recognised. (Did you forget to add this type to MyTypes?)");
+        std::cerr << "Warning: An unrecognised type was passed to run() and was ignored" << std::endl;
     }
 
     template <typename... Ts>
-	void plot(const Ts&... args)
+	void run(const Ts&... args)
 	{
         // Replay the header
         subprocess_->out() << header_.str();
 
         // Reload state for the chosen alternatives
-        styles_ = stylesHeader_;
+        snippets_ = snippetsHeader_;
 
         // Recurse into arguments
 		processArgs(args...);
@@ -569,7 +571,7 @@ public:
         // + This ends out code stream to the process, which e.g. for python allows the process to start execution
         // + Also important that each call to plot (aside from the intentional header) is stateless
         subprocess_.reset();  // destroy first
-        subprocess_ = std::make_unique<Subprocess<P>>(NUM_CHANNELS);
+        subprocess_ = std::make_unique<Process<P>>(NUM_CHANNELS);
 	}
 
     template <typename... Ts>
@@ -580,7 +582,7 @@ public:
         subprocess_->out().rdbuf(header_.rdbuf());
 
         // Also save the state of the chosen alternatives
-        stylesHeader_ = styles_;
+        snippetsHeader_ = snippets_;
 
         // Capture in local header_ buffer
         processArgs(args...);
@@ -596,4 +598,4 @@ public:
     // int fd_w() { return subprocess_->fd_w(); }
 };
 
-} // namespace qp
+} // namespace iosc

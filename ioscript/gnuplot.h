@@ -1,8 +1,8 @@
 #pragma once
 
-#include "qplot/qplot.h"
+#include "ioscript/ioscript.h"
 
-namespace qp {
+namespace iosc {
 
 #ifdef QPLOT_DEBUG
 	struct Gnuplot { static constexpr const char* cmd = "cat"; };
@@ -12,8 +12,8 @@ namespace qp {
 
 // For Gnuplot there's nothing to do. Gnuplot accepts data inline with code on it's standard input
 template <typename S>
-void addPrivateHeader(Qplot<Gnuplot,S>& python)
+void addPrivateHeader(Script<Gnuplot,S>& python)
 {
 }
 
-} // namespace qp
+} // namespace iosc

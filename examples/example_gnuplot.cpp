@@ -2,11 +2,11 @@
 #include <array>
 #include <cmath>
 
-#include "qplot/qplot.h"
-#include "qplot/gnuplot.h"
+#include "ioscript/ioscript.h"
+#include "ioscript/gnuplot.h"
 
 using namespace std;
-using namespace qp;
+using namespace iosc;
 
 namespace {
 
@@ -19,7 +19,7 @@ using Array2d = std::array<std::array<int, M>, N>;
 using MyArray = Array2d<SIZE_M,SIZE_N>;
 
 // By default Gnuplot takes data on stdin, expected after a `plot '-'` statement
-void sendData(Subprocess<Gnuplot>& gnuplot, const MyArray& arr)
+void sendData(Process<Gnuplot>& gnuplot, const MyArray& arr)
 {
     for (int i=0; i<arr.size(); i++)
     {
@@ -34,7 +34,7 @@ void sendData(Subprocess<Gnuplot>& gnuplot, const MyArray& arr)
 struct HeatMap
 {
 	template<typename T>
-	void operator()(Subprocess<Gnuplot>& gnuplot, const T& obj) const
+	void operator()(Process<Gnuplot>& gnuplot, const T& obj) const
 	{
     	gnuplot << "plot '-' using 1:2:3 with image" << endl;
         sendData(gnuplot, obj);
@@ -44,7 +44,7 @@ struct HeatMap
 struct NumberGrid
 {
 	template<typename T>
-	void operator()(Subprocess<Gnuplot>& gnuplot, const T& obj) const
+	void operator()(Process<Gnuplot>& gnuplot, const T& obj) const
 	{
     	gnuplot
             <<  "plot '-' using 1:2:3 with image"
@@ -59,7 +59,7 @@ struct NumberGrid
 struct ContourPlot
 {
     template<typename T>
-    void operator()(Subprocess<Gnuplot>& gnuplot, const T& obj) const
+    void operator()(Process<Gnuplot>& gnuplot, const T& obj) const
     {
         gnuplot
             << "set dgrid3d " << SIZE_M << ", " << SIZE_N << "\n"
@@ -75,7 +75,7 @@ struct ContourPlot
 
 struct Header
 {
-    void operator()(Subprocess<Gnuplot>& gnuplot) const {
+    void operator()(Process<Gnuplot>& gnuplot) const {
         gnuplot
             << "set terminal png size 640, 480\n"
             << "set output 'output.png'" << endl;
@@ -84,7 +84,7 @@ struct Header
 
 struct Filename
 {
-    void operator()(Subprocess<Gnuplot>& gnuplot) const {
+    void operator()(Process<Gnuplot>& gnuplot) const {
         gnuplot << "set output '" << filename << ".png'" << endl;
     }
     std::string filename = "output.png";
@@ -92,7 +92,7 @@ struct Filename
 
 struct ImageSize
 {
-    void operator()(Subprocess<Gnuplot>& gnuplot) const {
+    void operator()(Process<Gnuplot>& gnuplot) const {
         gnuplot << "set terminal png size " << size_x << ", " << size_y << endl;
     }
     unsigned size_x = 640;
@@ -109,7 +109,7 @@ struct Colours
 
     Colours(Palette palette) : palette(palette) {}
 
-    void operator()(Subprocess<Gnuplot>& gnuplot) const {
+    void operator()(Process<Gnuplot>& gnuplot) const {
         switch (palette)
         {
             case OCEAN:    gnuplot << "set palette rgbformulae 23,28,3 " << endl;  break;
@@ -124,14 +124,14 @@ struct Colours
 } // namespace
 
 
-using Scalar2D = qp::variant<HeatMap, NumberGrid, ContourPlot>;
+using Scalar2D = iosc::variant<HeatMap, NumberGrid, ContourPlot>;
 
-// Alternatively, associate 2d arrays of all sizes with our Scalar2D variant
-template <>                   struct has_styles<MyArray>      { using type = Scalar2D; };
-template <size_t M, size_t N> struct has_styles<Array2d<M,N>> { using type = Scalar2D; };
+template <>                   struct binds_to<MyArray>      { using type = Scalar2D; };
+
+// Alternatively, associate Array2d's of all sizes with Scalar2D
+template <size_t M, size_t N> struct binds_to<Array2d<M,N>> { using type = Scalar2D; };
 
 using MyTypes = std::tuple<MyArray>;
-using QpGnuplot = Qplot<Gnuplot,MyTypes>;
 
 void example_gnuplot()
 {
@@ -144,11 +144,11 @@ void example_gnuplot()
     	}
     }
 
-	QpGnuplot qplot(Header{}, HeatMap{}, Colours{Colours::RAINBOW});
-    qplot.plot(Filename{"Grid1"}, array);
-    qplot.plot(Filename{"Grid2"}, ContourPlot{}, array);
-    qplot.plot(Filename{"Grid3"}, ImageSize{800,600}, array);     // Same as Grid1, but larger
+	Script<Gnuplot,MyTypes> script(Header{}, HeatMap{}, Colours{Colours::RAINBOW});
+    script.run(Filename{"Grid1"}, array);
+    script.run(Filename{"Grid2"}, ContourPlot{}, array);
+    script.run(Filename{"Grid3"}, ImageSize{800,600}, array);     // Same as Grid1, but larger
 
-    qplot.addToHeader(Colours{Colours::OCEAN});
-    qplot.plot(array);
+    script.addToHeader(Colours{Colours::OCEAN});
+    script.run(array);
 }
