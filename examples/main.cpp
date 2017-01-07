@@ -1,9 +1,4 @@
-#include <iostream>
-#include <vector>
-
 #include "qplot/qplot.h"
-
-using namespace std;
 
 void testing();
 void example_python();
