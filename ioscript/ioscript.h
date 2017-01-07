@@ -128,7 +128,7 @@ template <typename T>
 class Process
 {
 public:
-    Process(unsigned numChannels=1)
+    Process(unsigned numChannels)
     {
         assert(numChannels < 1024); // todo
 
@@ -209,7 +209,7 @@ public:
     Process& operator=(const Process&) = delete;
 
     cf_ostream& out()  { return *cfout_; }
-    fd_ostream& data_out(unsigned c=0) {
+    fd_ostream& data_out(unsigned c) {
         if (c >= channels_.size())
             assert(false); // todo
         return *fdout_[c];
@@ -217,12 +217,12 @@ public:
 
     unsigned numChannels() { return channels_.size(); }
 
-    int fd_r(unsigned c=0) {
+    int fd_r(unsigned c) {
         if (c >= channels_.size())
             assert(false);
         return channels_[c].fd_r;
     }
-    int fd_w(unsigned c=0) {
+    int fd_w(unsigned c) {
         if (c >= channels_.size())
             assert(false);
         return channels_[c].fd_w;
@@ -392,7 +392,7 @@ struct is_script_snippet<T, P, std::enable_if_t<has_member_function<T, void(Proc
 };
 
 // This isn't great - there's probably a better way
-// This tests for a second parameter accepting a `const T&` by checking it supports `void*`
+// This tests for a second parameter accepting a `const T&` by indirectly checking it supports `void*`
 template <typename T, typename P, typename U = void>
 struct is_object_snippet {
     static constexpr bool value = false;
